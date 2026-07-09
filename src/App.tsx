@@ -107,6 +107,12 @@ export default function App() {
     advanceCoach(coachStep);
   }
 
+  /** Advance the current coach step without requiring a gesture. */
+  function tryCoachStep() {
+    if (!coachStep) return;
+    handlePractice(coachStep);
+  }
+
   function pushHistory(
     card: ReviewCard,
     action: HistoryEntry["action"],
@@ -257,7 +263,11 @@ export default function App() {
             demoNudge={demoNudge}
             onDemoNudgeDone={onDemoNudgeDone}
           />
-          <SwipeCoach step={coachStep} onSkip={finishCoach} />
+          <SwipeCoach
+            step={coachStep}
+            onSkip={finishCoach}
+            onTry={tryCoachStep}
+          />
           <ActionHints
             disabled={!top || sheetOpen || historyOpen || demoNudge}
             canRewind={canRewind && !coaching}
