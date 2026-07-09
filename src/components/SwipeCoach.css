@@ -1,0 +1,98 @@
+.swipe-coach-overlay {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 128px;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 16px 12px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  color: var(--canvas);
+  text-align: center;
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 32px rgba(38, 37, 30, 0.22);
+}
+
+.coach-stamp {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  transform: rotate(-8deg);
+  line-height: 1;
+}
+
+.swipe-coach-overlay.coach-merge .coach-stamp {
+  color: #ff8a4c;
+  border-color: #ff8a4c;
+  transform: rotate(-12deg);
+}
+
+.swipe-coach-overlay.coach-reject .coach-stamp {
+  color: #ff7a9a;
+  border-color: #ff7a9a;
+  transform: rotate(12deg);
+}
+
+.swipe-coach-overlay.coach-keep .coach-stamp {
+  color: #7eb6ff;
+  border-color: #7eb6ff;
+  transform: rotate(-4deg);
+}
+
+.coach-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.coach-detail {
+  margin: 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--canvas) 70%, transparent);
+}
+
+.coach-progress {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.coach-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--canvas) 28%, transparent);
+}
+
+.coach-dot.active {
+  background: var(--canvas);
+  transform: scale(1.15);
+}
+
+.coach-dot.done {
+  background: color-mix(in srgb, var(--canvas) 55%, transparent);
+}
+
+.coach-skip {
+  margin-top: 6px;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--canvas) 55%, transparent);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+}
+
+.coach-skip:hover {
+  color: var(--canvas);
+}
