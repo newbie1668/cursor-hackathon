@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { cardStats, type ReviewCard } from "../data/reviews";
-import { ciClass, formatCi, formatRisk, riskClass } from "../lib/labels";
+import { formatPrStatus, prStatusClass } from "../lib/labels";
+import { splitFilePath } from "../lib/paths";
+import {
+  IconBack,
+  IconExternal,
+  IconLink,
+  IconMore,
+} from "./ActionIcons";
 import { DiffHunk } from "./DiffHunk";
 import "./ReviewCard.css";
 
@@ -15,13 +22,11 @@ export function ReviewCardView({
   dragHint = { merge: 0, reject: 0, keep: 0 },
   interactive = true,
 }: ReviewCardViewProps) {
-  const [openPath, setOpenPath] = useState<string | null>(
-    card.files[0]?.path ?? null,
-  );
+  const [openPath, setOpenPath] = useState<string | null>(null);
   const stats = cardStats(card);
 
   return (
-    <article className="review-card" aria-label={card.title}>
+    <article className="review-card pr-detail" aria-label={card.title}>
       <div
         className="gesture-overlay merge"
         style={{ opacity: dragHint.merge }}
@@ -44,68 +49,120 @@ export function ReviewCardView({
         <span>KEEP GOING</span>
       </div>
 
-      <header className="review-card-header">
-        <div className="review-card-chips">
-          <span
-            className={`status-chip ${card.status === "waiting" ? "waiting" : "ready"}`}
+      <nav className="pr-nav" aria-label="Pull request navigation">
+        <button
+          type="button"
+          className="pr-nav-btn"
+          aria-label="Back"
+          tabIndex={interactive ? 0 : -1}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <IconBack />
+        </button>
+        <div className="pr-nav-actions">
+          <button
+            type="button"
+            className="pr-nav-btn"
+            aria-label="Copy link"
+            tabIndex={interactive ? 0 : -1}
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            {card.status === "waiting" ? "Waiting · agent resumed" : "Ready for review"}
-          </span>
-          <span className="model-chip">{card.model}</span>
+            <IconLink />
+          </button>
+          <button
+            type="button"
+            className="pr-nav-btn"
+            aria-label="More options"
+            tabIndex={interactive ? 0 : -1}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <IconMore />
+          </button>
         </div>
-        <p className="repo-line mono">
-          {card.repo}
-          <span className="repo-sep">·</span>
-          {card.branch}
-        </p>
-        <h2 className="review-title">{card.title}</h2>
-        <p className="review-summary">{card.summary}</p>
-        <div className="signal-row" aria-label="Oversight signals">
-          <span className={`signal ${riskClass(card.risk)}`}>
-            {formatRisk(card.risk)}
+      </nav>
+
+      <header className="pr-hero">
+        <h2 className="pr-title">
+          {card.title}{" "}
+          <span className="pr-number">#{card.prNumber}</span>
+        </h2>
+        <div className="pr-meta">
+          <span className={`pr-status-badge ${prStatusClass(card.status)}`}>
+            {formatPrStatus(card.status)}
           </span>
-          <span className={`signal ${ciClass(card.ci)}`}>{formatCi(card.ci)}</span>
-          <span className="signal signal-neutral mono">
-            +{stats.additions}/−{stats.deletions}
-          </span>
-          <span className="signal signal-neutral">
-            {stats.fileCount} {stats.fileCount === 1 ? "file" : "files"}
+          <span className="pr-stats" aria-label="Pull request stats">
+            <span className="stat-add">+{stats.additions}</span>{" "}
+            <span className="stat-del">−{stats.deletions}</span>
+            <span className="stat-sep">·</span>
+            {stats.fileCount} {stats.fileCount === 1 ? "File" : "Files"}
+            <span className="stat-sep">·</span>
+            {card.commits} {card.commits === 1 ? "Commit" : "Commits"}
           </span>
         </div>
       </header>
 
       <div
-        className="file-list"
-        role="list"
+        className="pr-scroll"
         onPointerDown={(e) => e.stopPropagation()}
       >
-        {card.files.map((file) => {
-          const open = openPath === file.path;
-          return (
-            <div key={file.path} className="file-block" role="listitem">
-              <button
-                type="button"
-                className="file-toggle"
-                aria-expanded={open}
-                disabled={!interactive}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenPath(open ? null : file.path);
-                }}
-              >
-                <span className="file-chevron" aria-hidden>
-                  {open ? "▾" : "▸"}
-                </span>
-                <span className="file-path mono">{file.path}</span>
-                <span className="file-stats mono">
-                  +{file.additions}/−{file.deletions}
-                </span>
-              </button>
-              {open &&
-                file.hunks.map((hunk, i) => <DiffHunk key={i} hunk={hunk} />)}
-            </div>
-          );
-        })}
+        {card.previewUrl && (
+          <section className="pr-section">
+            <h3 className="pr-section-label">Deployments</h3>
+            <a
+              className="deployment-card"
+              href={card.previewUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="deployment-check" aria-hidden>
+                ✓
+              </span>
+              <span className="deployment-label">Preview</span>
+              <IconExternal className="deployment-link" />
+            </a>
+          </section>
+        )}
+
+        <section className="pr-section">
+          <h3 className="pr-section-label">
+            {stats.fileCount} {stats.fileCount === 1 ? "File" : "Files"}
+          </h3>
+          <ul className="pr-file-list" role="list">
+            {card.files.map((file) => {
+              const open = openPath === file.path;
+              const { name, dir } = splitFilePath(file.path);
+              return (
+                <li key={file.path} className="pr-file-item">
+                  <button
+                    type="button"
+                    className="pr-file-row"
+                    aria-expanded={open}
+                    disabled={!interactive}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenPath(open ? null : file.path);
+                    }}
+                  >
+                    <span className="pr-file-chevron" aria-hidden>
+                      ›
+                    </span>
+                    <span className="pr-file-name">{name}</span>
+                    {dir && <span className="pr-file-dir">{dir}</span>}
+                    <span className="pr-file-stats" aria-hidden>
+                      <span className="stat-add">+{file.additions}</span>{" "}
+                      <span className="stat-del">−{file.deletions}</span>
+                    </span>
+                  </button>
+                  {open &&
+                    file.hunks.map((hunk, i) => (
+                      <DiffHunk key={i} hunk={hunk} />
+                    ))}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       </div>
     </article>
   );

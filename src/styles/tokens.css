@@ -25,6 +25,10 @@
   --risk-eyes: #c08532;
   --risk-danger: #cf2d56;
   --waiting-bg: #efe9df;
+  --pr-status: #7c3aed;
+  --pr-status-bg: #f3eeff;
+  --stat-add: #1f8a65;
+  --stat-del: #cf2d56;
   --radius: 16px;
   --radius-sm: 10px;
   --radius-pill: 999px;

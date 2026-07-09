@@ -11,6 +11,7 @@ export interface DiffFile {
 
 export interface ReviewCard {
   id: string;
+  prNumber: number;
   title: string;
   summary: string;
   repo: string;
@@ -20,11 +21,14 @@ export interface ReviewCard {
   ci: CiStatus;
   files: DiffFile[];
   status: CardStatus;
+  commits: number;
+  previewUrl?: string;
 }
 
 export const INITIAL_REVIEWS: ReviewCard[] = [
   {
     id: "rev-1",
+    prNumber: 12,
     title: "Fix empty-cart checkout crash",
     summary:
       "Guards checkout when the cart is empty and shows a clear empty state instead of throwing.",
@@ -34,6 +38,8 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
     risk: "safe",
     ci: "passing",
     status: "ready",
+    commits: 2,
+    previewUrl: "https://preview.acme.dev/fix-empty-cart",
     files: [
       {
         path: "src/pages/Checkout.tsx",
@@ -69,6 +75,7 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
   },
   {
     id: "rev-2",
+    prNumber: 18,
     title: "Refactor auth session refresh",
     summary:
       "Moves token refresh into a shared hook and retries once on 401. Touches middleware and client.",
@@ -78,6 +85,8 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
     risk: "needs_eyes",
     ci: "passing",
     status: "ready",
+    commits: 2,
+    previewUrl: "https://preview.acme.dev/fix-empty-cart",
     files: [
       {
         path: "src/hooks/useSessionRefresh.ts",
@@ -127,6 +136,7 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
   },
   {
     id: "rev-3",
+    prNumber: 21,
     title: "Unblock CI: flaky timezone test",
     summary:
       "Pins the test clock to UTC and replaces Date.now() with a controllable fake timer.",
@@ -136,6 +146,8 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
     risk: "safe",
     ci: "passing",
     status: "ready",
+    commits: 2,
+    previewUrl: "https://preview.acme.dev/fix-empty-cart",
     files: [
       {
         path: "tests/invoice-due.test.ts",
@@ -155,6 +167,7 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
   },
   {
     id: "rev-4",
+    prNumber: 24,
     title: "Tighten CORS and add rate limits",
     summary:
       "Restricts allowed origins and adds per-IP rate limiting on /api. High blast radius — review carefully.",
@@ -164,6 +177,8 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
     risk: "dangerous",
     ci: "failing",
     status: "ready",
+    commits: 2,
+    previewUrl: "https://preview.acme.dev/fix-empty-cart",
     files: [
       {
         path: "src/middleware/cors.ts",
@@ -206,6 +221,7 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
   },
   {
     id: "rev-5",
+    prNumber: 27,
     title: "Polish settings empty state copy",
     summary:
       "Updates empty-state headline and supporting line on the team settings page. Copy-only change.",
@@ -215,6 +231,8 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
     risk: "safe",
     ci: "passing",
     status: "ready",
+    commits: 2,
+    previewUrl: "https://preview.acme.dev/fix-empty-cart",
     files: [
       {
         path: "src/pages/TeamSettings.tsx",
@@ -232,6 +250,7 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
   },
   {
     id: "rev-6",
+    prNumber: 31,
     title: "Add webhook signature verification",
     summary:
       "Verifies Stripe webhook signatures before processing events. Pending CI on the integration suite.",
@@ -241,6 +260,8 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
     risk: "needs_eyes",
     ci: "pending",
     status: "ready",
+    commits: 2,
+    previewUrl: "https://preview.acme.dev/fix-empty-cart",
     files: [
       {
         path: "src/webhooks/stripe.ts",
@@ -274,6 +295,7 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
   },
   {
     id: "rev-7",
+    prNumber: 34,
     title: "Migrate list endpoint to cursor pagination",
     summary:
       "Replaces offset pagination with cursor-based pages on /projects. Clients still on offset need a follow-up.",
@@ -283,6 +305,8 @@ export const INITIAL_REVIEWS: ReviewCard[] = [
     risk: "needs_eyes",
     ci: "passing",
     status: "ready",
+    commits: 2,
+    previewUrl: "https://preview.acme.dev/fix-empty-cart",
     files: [
       {
         path: "src/api/projects.ts",
