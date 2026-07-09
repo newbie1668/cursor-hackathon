@@ -98,7 +98,9 @@ function SwipeableCard({
   const nudging = nudgePose != null;
 
   useEffect(() => {
-    if (!demoNudge || locked || exiting || coachStep) return;
+    // Don't gate on `locked` — App used to pass demoNudge as locked, which
+    // deadlocked this effect and froze the UI.
+    if (!demoNudge || exiting || coachStep) return;
 
     let cancelled = false;
     const poses: Pose[] = [
@@ -115,7 +117,12 @@ function SwipeableCard({
         await sleep(520);
       }
       if (cancelled) return;
-      setNudgePose({ x: 0, y: 0, rotate: 0, hint: { merge: 0, reject: 0, keep: 0 } });
+      setNudgePose({
+        x: 0,
+        y: 0,
+        rotate: 0,
+        hint: { merge: 0, reject: 0, keep: 0 },
+      });
       setHint({ merge: 0, reject: 0, keep: 0 });
       await sleep(280);
       if (cancelled) return;
@@ -124,10 +131,21 @@ function SwipeableCard({
     }
 
     void run();
+
+    // Safety: never leave the UI frozen if the animation path stalls.
+    const failSafe = window.setTimeout(() => {
+      if (cancelled) return;
+      cancelled = true;
+      setNudgePose(null);
+      setHint({ merge: 0, reject: 0, keep: 0 });
+      onDemoNudgeDone?.();
+    }, 4000);
+
     return () => {
       cancelled = true;
+      window.clearTimeout(failSafe);
     };
-  }, [demoNudge, locked, exiting, coachStep, onDemoNudgeDone]);
+  }, [demoNudge, exiting, coachStep, onDemoNudgeDone]);
 
   function practiceOrCommit(action: SwipeAction) {
     if (coachStep) {
@@ -205,7 +223,7 @@ function SwipeableCard({
   }
 
   const exitX = exiting === "merge" ? 420 : exiting === "reject" ? -420 : 0;
-  const dragEnabled = !locked && !exiting && !nudging;
+  const dragEnabled = !locked && !exiting && !nudging && !demoNudge;
 
   const animateTarget = exiting
     ? { x: exitX, y: 0, opacity: 0, rotate: 0, transition: { duration: 0.28 } }
