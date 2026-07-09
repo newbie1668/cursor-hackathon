@@ -11,20 +11,11 @@ import {
   ReviewActionSheet,
   type ReviewAction,
 } from "./components/ReviewActionSheet";
-import { SwipeCoach } from "./components/SwipeCoach";
 import { Toast, type ToastState } from "./components/Toast";
 import {
   cloneReviews,
   type ReviewCard,
 } from "./data/reviews";
-import {
-  clearCoachDone,
-  coachStepMatches,
-  nextCoachStep,
-  readCoachDone,
-  writeCoachDone,
-  type CoachStep,
-} from "./lib/swipeCoach";
 
 let historySeq = 0;
 
@@ -42,10 +33,6 @@ export default function App() {
   const toastTimer = useRef<number | null>(null);
   const toastId = useRef(0);
 
-  const coachDoneInitially = useRef(readCoachDone());
-  const [demoNudge, setDemoNudge] = useState(!coachDoneInitially.current);
-  const [coachStep, setCoachStep] = useState<CoachStep | null>(null);
-
   const readyCards = useMemo(
     () => cards.filter((c) => c.status === "ready"),
     [cards],
@@ -58,7 +45,6 @@ export default function App() {
   const top = readyCards[0] ?? null;
   const canRewind = history.length > 0;
   const sheetOpen = sheetMode != null;
-  const coaching = coachStep != null;
 
   const clearToastTimer = useCallback(() => {
     if (toastTimer.current != null) {
@@ -86,42 +72,6 @@ export default function App() {
   );
 
   useEffect(() => () => clearToastTimer(), [clearToastTimer]);
-
-  function finishCoach() {
-    setCoachStep(null);
-    setDemoNudge(false);
-    writeCoachDone();
-  }
-
-  function advanceCoach(from: CoachStep) {
-    const next = nextCoachStep(from);
-    if (next) setCoachStep(next);
-    else {
-      finishCoach();
-      showToast("You’re set · swipe or tap to review");
-    }
-  }
-
-  function handlePractice(action: SwipeAction) {
-    if (!coachStep) return;
-    if (!coachStepMatches(coachStep, action)) {
-      showToast(
-        coachStep === "merge"
-          ? "Try swiping right (or tap Merge)"
-          : coachStep === "reject"
-            ? "Try swiping left (or tap Reject)"
-            : "Try swiping up (or tap Keep)",
-      );
-      return;
-    }
-    advanceCoach(coachStep);
-  }
-
-  /** Advance the current coach step without requiring a gesture. */
-  function tryCoachStep() {
-    if (!coachStep) return;
-    handlePractice(coachStep);
-  }
 
   function pushHistory(
     card: ReviewCard,
@@ -215,14 +165,6 @@ export default function App() {
     else openSheet({ type: "keep" });
   }
 
-  function onKeepGoing() {
-    if (coaching) {
-      handlePractice("keep");
-      return;
-    }
-    openSheet({ type: "keep" });
-  }
-
   function resetDemo() {
     clearToastTimer();
     setToast(null);
@@ -230,15 +172,7 @@ export default function App() {
     setHistoryOpen(false);
     setHistory([]);
     setCards(cloneReviews());
-    clearCoachDone();
-    setCoachStep(null);
-    setDemoNudge(true);
   }
-
-  const onDemoNudgeDone = useCallback(() => {
-    setDemoNudge(false);
-    setCoachStep("merge");
-  }, []);
 
   return (
     <ApprovalShell
@@ -270,34 +204,20 @@ export default function App() {
             cards={readyCards}
             onSwipe={handleSwipe}
             locked={sheetOpen || historyOpen}
-            coachStep={coachStep}
-            onPracticeSwipe={handlePractice}
-            demoNudge={demoNudge}
-            onDemoNudgeDone={onDemoNudgeDone}
-          />
-          <SwipeCoach
-            step={coachStep}
-            onSkip={finishCoach}
-            onTry={tryCoachStep}
           />
           <ActionHints
-            disabled={!top || sheetOpen || historyOpen || demoNudge}
-            canRewind={canRewind && !coaching}
-            highlight={coachStep}
-            onMerge={() =>
-              coaching ? handlePractice("merge") : openSheet({ type: "merge" })
-            }
-            onReject={() =>
-              coaching ? handlePractice("reject") : openSheet({ type: "reject" })
-            }
-            onKeepGoing={onKeepGoing}
+            disabled={!top || sheetOpen || historyOpen}
+            canRewind={canRewind}
+            onMerge={() => openSheet({ type: "merge" })}
+            onReject={() => openSheet({ type: "reject" })}
+            onKeepGoing={() => openSheet({ type: "keep" })}
             onRewind={rewindLast}
           />
         </>
       )}
 
       <KeepGoingSheet
-        open={sheetMode?.type === "keep" && !!top && !coaching}
+        open={sheetMode?.type === "keep" && !!top}
         title={top?.title ?? ""}
         onClose={() => setSheetMode(null)}
         onSend={(message) => top && markWaiting(top, message)}
@@ -305,9 +225,7 @@ export default function App() {
 
       <ReviewActionSheet
         open={
-          !coaching &&
-          (sheetMode?.type === "merge" || sheetMode?.type === "reject") &&
-          !!top
+          (sheetMode?.type === "merge" || sheetMode?.type === "reject") && !!top
         }
         action={sheetMode?.type === "reject" ? "reject" : "merge"}
         title={top?.title ?? ""}

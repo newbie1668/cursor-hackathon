@@ -1,17 +1,10 @@
 .action-hints {
-  position: relative;
-  z-index: 36;
   flex: 0 0 auto;
   padding: 6px 16px max(18px, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--canvas) 0%, transparent) 0%,
-    var(--canvas) 28%
-  );
 }
 
 .swipe-coach-label {
@@ -115,20 +108,4 @@
 
 .tinder-btn.rewind:hover:not(:disabled) {
   background: color-mix(in srgb, var(--keep-going) 8%, var(--surface));
-}
-
-.tinder-btn.pulse {
-  animation: coach-pulse 1.1s ease-in-out infinite;
-}
-
-@keyframes coach-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow: var(--shadow-card);
-  }
-  50% {
-    transform: scale(1.08);
-    box-shadow: 0 10px 28px rgba(38, 37, 30, 0.18);
-  }
 }
