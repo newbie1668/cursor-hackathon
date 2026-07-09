@@ -1,0 +1,2 @@
+# cursor-hackathon
+hackathon
