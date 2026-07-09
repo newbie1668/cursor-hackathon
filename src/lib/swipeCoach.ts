@@ -1,4 +1,4 @@
-import type { SwipeAction } from "../components/CardStack";
+import type { SwipeAction } from "./swipeActions";
 
 export type CoachStep = "merge" | "reject" | "keep";
 
