@@ -4,7 +4,6 @@ import {
   IconReject,
   IconRewind,
 } from "./ActionIcons";
-import type { CoachStep } from "../lib/swipeCoach";
 import "./ActionHints.css";
 
 interface ActionHintsProps {
@@ -14,7 +13,6 @@ interface ActionHintsProps {
   onRewind: () => void;
   canRewind: boolean;
   disabled?: boolean;
-  highlight?: CoachStep | null;
 }
 
 export function ActionHints({
@@ -24,18 +22,11 @@ export function ActionHints({
   onRewind,
   canRewind,
   disabled,
-  highlight = null,
 }: ActionHintsProps) {
   return (
     <div className="action-hints">
       <p className="swipe-coach-label" aria-hidden>
-        {highlight
-          ? highlight === "merge"
-            ? "Practice · swipe right or tap Merge"
-            : highlight === "reject"
-              ? "Practice · swipe left or tap Reject"
-              : "Practice · swipe up or tap Keep"
-          : "Swipe or tap"}
+        Swipe or tap
       </p>
       <div className="action-buttons" role="group" aria-label="Review actions">
         <button
@@ -51,7 +42,7 @@ export function ActionHints({
         </button>
         <button
           type="button"
-          className={`tinder-btn reject ${highlight === "reject" ? "pulse" : ""}`}
+          className="tinder-btn reject"
           disabled={disabled}
           onClick={onReject}
           aria-label="Reject — swipe left"
@@ -62,7 +53,7 @@ export function ActionHints({
         </button>
         <button
           type="button"
-          className={`tinder-btn keep ${highlight === "keep" ? "pulse" : ""}`}
+          className="tinder-btn keep"
           disabled={disabled}
           onClick={onKeepGoing}
           aria-label="Keep going — swipe up"
@@ -73,7 +64,7 @@ export function ActionHints({
         </button>
         <button
           type="button"
-          className={`tinder-btn merge ${highlight === "merge" ? "pulse" : ""}`}
+          className="tinder-btn merge"
           disabled={disabled}
           onClick={onMerge}
           aria-label="Merge — swipe right"
