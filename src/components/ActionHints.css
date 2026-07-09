@@ -1,17 +1,17 @@
 .action-hints {
   flex: 0 0 auto;
-  padding: 4px 12px 28px;
+  padding: 6px 16px max(18px, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .swipe-coach {
   margin: 0;
   font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: var(--muted);
 }
 
@@ -19,7 +19,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -30,9 +30,9 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 2.5px solid var(--hairline);
+  border: none;
   background: var(--surface);
-  box-shadow: 0 4px 14px rgba(38, 37, 30, 0.08);
+  box-shadow: var(--shadow-card);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
@@ -43,7 +43,7 @@
 
 .tinder-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(38, 37, 30, 0.12);
+  box-shadow: 0 10px 24px rgba(38, 37, 30, 0.12);
 }
 
 .tinder-btn:active:not(:disabled) {
@@ -63,7 +63,7 @@
   transform: translateX(-50%);
   font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   color: var(--muted);
   pointer-events: none;
@@ -73,28 +73,29 @@
   width: 44px;
   height: 44px;
   color: var(--keep-going);
-  border-color: color-mix(in srgb, var(--keep-going) 45%, var(--hairline));
 }
 
 .tinder-btn.reject {
-  width: 62px;
-  height: 62px;
+  width: 60px;
+  height: 60px;
   color: var(--reject);
-  border-color: color-mix(in srgb, var(--reject) 55%, var(--hairline));
 }
 
 .tinder-btn.keep {
   width: 48px;
   height: 48px;
-  color: #3d7ea6;
-  border-color: color-mix(in srgb, #3d7ea6 50%, var(--hairline));
+  color: var(--action-blue);
 }
 
 .tinder-btn.merge {
-  width: 62px;
-  height: 62px;
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--hairline));
+  width: 60px;
+  height: 60px;
+  color: #fff;
+  background: var(--ink);
+}
+
+.tinder-btn.merge:hover:not(:disabled) {
+  background: #1a1914;
 }
 
 .tinder-btn.reject:hover:not(:disabled) {
@@ -102,11 +103,7 @@
 }
 
 .tinder-btn.keep:hover:not(:disabled) {
-  background: color-mix(in srgb, #3d7ea6 8%, var(--surface));
-}
-
-.tinder-btn.merge:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  background: color-mix(in srgb, var(--action-blue) 8%, var(--surface));
 }
 
 .tinder-btn.rewind:hover:not(:disabled) {

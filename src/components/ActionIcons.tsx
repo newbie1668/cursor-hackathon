@@ -58,12 +58,20 @@ export function IconMerge({ className }: { className?: string }) {
     <svg
       className={className}
       viewBox="0 0 24 24"
-      width="28"
-      height="28"
-      fill="currentColor"
+      width="26"
+      height="26"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden
     >
-      <path d="M12 21s-6.7-4.35-9.33-8.1C.7 9.9 2.1 6.2 5.4 5.35c1.9-.5 3.9.2 5.1 1.7 1.2-1.5 3.2-2.2 5.1-1.7 3.3.85 4.7 4.55 2.73 7.55C18.7 16.65 12 21 12 21z" />
+      <path d="M7 7v6a4 4 0 0 0 4 4h2" />
+      <circle cx="7" cy="5" r="2" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="17" r="2" fill="currentColor" stroke="none" />
+      <path d="M17 7l3 3-3 3" />
+      <path d="M12 10h8" />
     </svg>
   );
 }

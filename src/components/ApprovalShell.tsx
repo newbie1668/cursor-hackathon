@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { IconHistory } from "./ActionIcons";
+import { CursorAppIcon } from "./CursorLogo";
 import "./ApprovalShell.css";
 
 interface ApprovalShellProps {
@@ -23,13 +24,10 @@ export function ApprovalShell({
         <div className="phone-notch" aria-hidden />
         <div className="approval-shell">
           <header className="shell-header">
-            <div className="brand-row">
-              <div className="brand-mark" aria-hidden>
-                <span className="brand-mark-plus" />
-              </div>
-              <div className="brand-text">
-                <p className="brand-name">Cursor</p>
-                <h1 className="mode-title">Approval Mode</h1>
+            <div className="nav-row">
+              <div className="brand-lockup">
+                <CursorAppIcon className="brand-logo" />
+                <span className="brand-wordmark">Cursor</span>
               </div>
               <button
                 type="button"
@@ -48,12 +46,15 @@ export function ApprovalShell({
                 )}
               </button>
             </div>
-            <p className="mode-sub">← reject · ↑ keep going · merge →</p>
+            <h1 className="mode-title">Ready to review</h1>
             <div className="queue-meta">
-              <span className="queue-count">{readyCount} ready</span>
+              <span className="queue-count">
+                {readyCount} {readyCount === 1 ? "agent" : "agents"}
+              </span>
               {waitingCount > 0 && (
                 <span className="waiting-count">{waitingCount} waiting</span>
               )}
+              <span className="queue-hint">← reject · ↑ keep · merge →</span>
             </div>
           </header>
           {children}

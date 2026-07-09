@@ -10,7 +10,8 @@
   padding: 12px 14px;
   background: var(--ink);
   color: var(--canvas);
-  border-radius: var(--radius);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(38, 37, 30, 0.2);
 }
 
 .toast-message {

@@ -2,7 +2,7 @@
 
 Tinder-style swipe review for Cursor agent diffs — a hackathon prototype for the London iOS Cursor Hackathon **Review + QA** track.
 
-**One-liner:** Swipe right to merge, left to reject, up to keep going — with Tinder-style buttons and swipe history.
+**One-liner:** Swipe right to merge, left to reject, up to keep going — Cursor mobile chrome with official cube logo, Tinder-style buttons, and swipe history.
 
 ## Quick start
 
@@ -43,7 +43,8 @@ Cards show risk, CI, +/- lines, and expandable unified diffs before you decide. 
 - Vite + React + TypeScript  
 - Framer Motion (swipe + sheet)  
 - Mock review queue in `src/data/reviews.ts` (no auth / APIs)  
-- Cursor-inspired tokens: cream `#f7f7f4`, ink `#26251e`, orange `#f54e00`
+- Cursor brand: official 2D cube logo from [cursor.com/brand](https://cursor.com/brand), cream canvas `#f2f1ed`, ink `#26251e`, orange `#f54e00`  
+- UI chrome mirrors Cursor for iOS (rounded cards, pill chips, black primary CTAs)
 
 ## Project layout
 
@@ -61,6 +62,7 @@ src/
     HistorySheet.tsx
     ActionHints.tsx
     ActionIcons.tsx
+    CursorLogo.tsx
     Toast.tsx
 ```
 
