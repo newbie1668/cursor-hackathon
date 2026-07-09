@@ -217,6 +217,11 @@ export default function App() {
     setDemoNudge(true);
   }
 
+  const onDemoNudgeDone = useCallback(() => {
+    setDemoNudge(false);
+    setCoachStep("merge");
+  }, []);
+
   return (
     <ApprovalShell
       readyCount={readyCards.length}
@@ -246,14 +251,11 @@ export default function App() {
           <CardStack
             cards={readyCards}
             onSwipe={handleSwipe}
-            locked={sheetOpen || historyOpen || demoNudge}
+            locked={sheetOpen || historyOpen}
             coachStep={coachStep}
             onPracticeSwipe={handlePractice}
             demoNudge={demoNudge}
-            onDemoNudgeDone={() => {
-              setDemoNudge(false);
-              setCoachStep("merge");
-            }}
+            onDemoNudgeDone={onDemoNudgeDone}
           />
           <SwipeCoach step={coachStep} onSkip={finishCoach} />
           <ActionHints
