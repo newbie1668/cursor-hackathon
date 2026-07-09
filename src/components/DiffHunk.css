@@ -1,0 +1,42 @@
+.diff-block {
+  margin: 0;
+  padding: 8px 0;
+  overflow-x: auto;
+  background: var(--code-bg);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.diff-line {
+  display: flex;
+  white-space: pre;
+  padding: 0 8px;
+}
+
+.diff-gutter {
+  flex: 0 0 14px;
+  color: var(--muted);
+  user-select: none;
+}
+
+.diff-add {
+  background: var(--diff-add-bg);
+  color: var(--diff-add-text);
+}
+
+.diff-del {
+  background: var(--diff-del-bg);
+  color: var(--diff-del-text);
+}
+
+.diff-meta,
+.diff-range {
+  color: var(--muted);
+  background: transparent;
+}
+
+.diff-ctx {
+  color: var(--ink);
+}
