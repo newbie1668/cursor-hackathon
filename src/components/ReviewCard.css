@@ -27,35 +27,52 @@
 }
 
 .gesture-overlay span {
-  padding: 8px 14px;
-  border-radius: var(--radius);
-  border: 2px solid currentColor;
-  background: var(--surface);
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 3px solid currentColor;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  box-shadow: 0 2px 12px rgba(38, 37, 30, 0.08);
 }
 
 .gesture-overlay.merge {
   background: var(--overlay-merge);
   color: var(--accent);
   justify-content: flex-start;
-  padding-left: 20px;
-  align-items: center;
-  padding-top: 0;
+  padding-left: 24px;
+  align-items: flex-start;
+  padding-top: 36px;
+}
+
+.gesture-overlay.merge span {
+  transform: rotate(-18deg);
 }
 
 .gesture-overlay.reject {
   background: var(--overlay-reject);
   color: var(--reject);
   justify-content: flex-end;
-  padding-right: 20px;
-  align-items: center;
-  padding-top: 0;
+  padding-right: 24px;
+  align-items: flex-start;
+  padding-top: 36px;
+}
+
+.gesture-overlay.reject span {
+  transform: rotate(18deg);
 }
 
 .gesture-overlay.keep {
   background: var(--overlay-keep);
-  color: var(--keep-going);
+  color: #3d7ea6;
   align-items: flex-start;
-  padding-top: 48px;
+  padding-top: 40px;
+}
+
+.gesture-overlay.keep span {
+  transform: rotate(-6deg);
 }
 
 .review-card-header {

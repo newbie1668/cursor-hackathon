@@ -1,55 +1,114 @@
 .action-hints {
   flex: 0 0 auto;
-  padding: 8px 16px 20px;
+  padding: 4px 12px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
-.swipe-legend {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-  padding: 8px 10px;
-  border: 1px dashed var(--hairline);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--muted);
+.swipe-coach {
+  margin: 0;
   font-size: 11px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.tinder-btn {
+  position: relative;
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1fr;
-  gap: 8px;
-}
-
-.action-btn {
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  padding: 12px 8px;
-  font-size: 13px;
-  font-weight: 500;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2.5px solid var(--hairline);
   background: var(--surface);
+  box-shadow: 0 4px 14px rgba(38, 37, 30, 0.08);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+  color: var(--ink);
+  padding: 0;
 }
 
-.action-btn:disabled {
-  opacity: 0.4;
+.tinder-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(38, 37, 30, 0.12);
+}
+
+.tinder-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.tinder-btn:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-.action-btn.reject {
-  color: var(--reject);
-  border-color: color-mix(in srgb, var(--reject) 35%, var(--hairline));
+.tinder-btn-label {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--muted);
+  pointer-events: none;
 }
 
-.action-btn.keep {
+.tinder-btn.rewind {
+  width: 44px;
+  height: 44px;
   color: var(--keep-going);
-  border-color: color-mix(in srgb, var(--keep-going) 35%, var(--hairline));
+  border-color: color-mix(in srgb, var(--keep-going) 45%, var(--hairline));
 }
 
-.action-btn.merge {
-  color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
+.tinder-btn.reject {
+  width: 62px;
+  height: 62px;
+  color: var(--reject);
+  border-color: color-mix(in srgb, var(--reject) 55%, var(--hairline));
+}
+
+.tinder-btn.keep {
+  width: 48px;
+  height: 48px;
+  color: #3d7ea6;
+  border-color: color-mix(in srgb, #3d7ea6 50%, var(--hairline));
+}
+
+.tinder-btn.merge {
+  width: 62px;
+  height: 62px;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--hairline));
+}
+
+.tinder-btn.reject:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--reject) 8%, var(--surface));
+}
+
+.tinder-btn.keep:hover:not(:disabled) {
+  background: color-mix(in srgb, #3d7ea6 8%, var(--surface));
+}
+
+.tinder-btn.merge:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.tinder-btn.rewind:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--keep-going) 8%, var(--surface));
 }

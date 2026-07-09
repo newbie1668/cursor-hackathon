@@ -54,6 +54,41 @@
   gap: 12px;
 }
 
+.history-btn {
+  margin-left: auto;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+.history-btn:hover {
+  border-color: var(--border-medium);
+}
+
+.history-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
+
 .brand-mark {
   width: 36px;
   height: 36px;
@@ -161,19 +196,33 @@
 }
 
 .empty-state p {
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   color: var(--muted);
   font-size: 14px;
+}
+
+.empty-state .history-empty-btn {
+  margin-bottom: 8px;
+}
+
+.btn {
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: var(--hairline);
+  color: var(--ink);
 }
 
 .btn.reset {
   background: var(--ink);
   color: var(--canvas);
   border: none;
-  border-radius: var(--radius);
-  padding: 12px 18px;
-  font-size: 14px;
-  font-weight: 500;
 }
 
 @media (max-width: 480px) {
