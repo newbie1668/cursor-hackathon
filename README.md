@@ -28,7 +28,7 @@ npm run preview  # preview the build
 | ↺ **Rewind** | Undo the last swipe |
 | History (clock) | Browse every swipe and restore any card |
 
-Cards show risk, CI, +/- lines, and expandable unified diffs before you decide. Circular action buttons mirror Tinder’s layout so left / right / up are obvious. Toasts and Rewind support **Undo**; History keeps a full session log.
+Cards show risk, CI, +/- lines, and expandable unified diffs before you decide. Circular action buttons mirror Tinder’s layout so left / right / up are obvious. First launch plays a **demo nudge** (peek right / left / up with stamps), then a short **practice coach** you can skip. Toasts and Rewind support **Undo**; History keeps a full session log.
 
 ## Demo script (≤2 min Loom)
 
@@ -63,6 +63,7 @@ src/
     ActionHints.tsx
     ActionIcons.tsx
     CursorLogo.tsx
+    SwipeCoach.tsx
     Toast.tsx
 ```
 
