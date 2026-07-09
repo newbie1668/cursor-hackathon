@@ -1,0 +1,55 @@
+.action-hints {
+  flex: 0 0 auto;
+  padding: 8px 16px 20px;
+}
+
+.swipe-legend {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px dashed var(--hairline);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 8px;
+}
+
+.action-btn {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 12px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface);
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action-btn.reject {
+  color: var(--reject);
+  border-color: color-mix(in srgb, var(--reject) 35%, var(--hairline));
+}
+
+.action-btn.keep {
+  color: var(--keep-going);
+  border-color: color-mix(in srgb, var(--keep-going) 35%, var(--hairline));
+}
+
+.action-btn.merge {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
