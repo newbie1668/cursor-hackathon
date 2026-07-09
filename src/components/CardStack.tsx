@@ -92,7 +92,6 @@ function SwipeableCard({
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-12, 12]);
-  const [exiting, setExiting] = useState<"merge" | "reject" | null>(null);
   const [hint, setHint] = useState({ merge: 0, reject: 0, keep: 0 });
   const [nudgePose, setNudgePose] = useState<Pose | null>(null);
   const nudging = nudgePose != null;
@@ -100,7 +99,7 @@ function SwipeableCard({
   useEffect(() => {
     // Don't gate on `locked` — App used to pass demoNudge as locked, which
     // deadlocked this effect and froze the UI.
-    if (!demoNudge || exiting || coachStep) return;
+    if (!demoNudge || coachStep) return;
 
     let cancelled = false;
     const poses: Pose[] = [
@@ -145,7 +144,7 @@ function SwipeableCard({
       cancelled = true;
       window.clearTimeout(failSafe);
     };
-  }, [demoNudge, exiting, coachStep, onDemoNudgeDone]);
+  }, [demoNudge, coachStep, onDemoNudgeDone]);
 
   function practiceOrCommit(action: SwipeAction) {
     if (coachStep) {
@@ -161,27 +160,20 @@ function SwipeableCard({
       return;
     }
 
-    if (action === "keep") {
-      setHint({ merge: 0, reject: 0, keep: 1 });
-      x.set(0);
-      y.set(0);
-      onSwipe("keep", card);
-      window.setTimeout(() => setHint({ merge: 0, reject: 0, keep: 0 }), 200);
-      return;
-    }
-
-    setExiting(action);
-    window.setTimeout(() => onSwipe(action, card), 260);
+    setHint({
+      merge: action === "merge" ? 1 : 0,
+      reject: action === "reject" ? 1 : 0,
+      keep: action === "keep" ? 1 : 0,
+    });
+    x.set(0);
+    y.set(0);
+    onSwipe(action, card);
+    window.setTimeout(() => setHint({ merge: 0, reject: 0, keep: 0 }), 200);
   }
 
-  function commitMergeOrReject(action: "merge" | "reject") {
-    if (exiting || locked || nudging) return;
+  function commitAction(action: SwipeAction) {
+    if (locked || nudging) return;
     practiceOrCommit(action);
-  }
-
-  function commitKeep() {
-    if (exiting || locked || nudging) return;
-    practiceOrCommit("keep");
   }
 
   function onDrag(_: unknown, info: PanInfo) {
@@ -208,39 +200,36 @@ function SwipeableCard({
     const goReject = offset.x < REJECT_X || (offset.x < -70 && velocity.x < -700);
 
     if (goKeep && Math.abs(offset.y) >= Math.abs(offset.x) * 0.85) {
-      commitKeep();
+      commitAction("keep");
       return;
     }
     if (goMerge) {
-      commitMergeOrReject("merge");
+      commitAction("merge");
       return;
     }
     if (goReject) {
-      commitMergeOrReject("reject");
+      commitAction("reject");
       return;
     }
     setHint({ merge: 0, reject: 0, keep: 0 });
   }
 
-  const exitX = exiting === "merge" ? 420 : exiting === "reject" ? -420 : 0;
-  const dragEnabled = !locked && !exiting && !nudging && !demoNudge;
+  const dragEnabled = !locked && !nudging && !demoNudge;
 
-  const animateTarget = exiting
-    ? { x: exitX, y: 0, opacity: 0, rotate: 0, transition: { duration: 0.28 } }
-    : nudgePose
-      ? {
-          x: nudgePose.x,
-          y: nudgePose.y,
-          rotate: nudgePose.rotate,
-          opacity: 1,
-          transition: { type: "spring" as const, stiffness: 300, damping: 24 },
-        }
-      : { x: 0, y: 0, opacity: 1, rotate: 0 };
+  const animateTarget = nudgePose
+    ? {
+        x: nudgePose.x,
+        y: nudgePose.y,
+        rotate: nudgePose.rotate,
+        opacity: 1,
+        transition: { type: "spring" as const, stiffness: 300, damping: 24 },
+      }
+    : { x: 0, y: 0, opacity: 1, rotate: 0 };
 
   return (
     <motion.div
       className="stack-layer top-card"
-      style={nudging || exiting ? undefined : { x, y, rotate, zIndex: 3 }}
+      style={nudging ? undefined : { x, y, rotate, zIndex: 3 }}
       drag={dragEnabled}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.9}
@@ -249,14 +238,7 @@ function SwipeableCard({
       animate={animateTarget}
       initial={{ x: 0, y: 0, opacity: 1, rotate: 0 }}
     >
-      <ReviewCardView
-        card={card}
-        dragHint={{
-          merge: exiting === "merge" ? 1 : hint.merge,
-          reject: exiting === "reject" ? 1 : hint.reject,
-          keep: hint.keep,
-        }}
-      />
+      <ReviewCardView card={card} dragHint={hint} />
     </motion.div>
   );
 }

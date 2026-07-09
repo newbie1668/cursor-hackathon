@@ -7,6 +7,10 @@ import {
   type HistoryEntry,
 } from "./components/HistorySheet";
 import { KeepGoingSheet } from "./components/KeepGoingSheet";
+import {
+  ReviewActionSheet,
+  type ReviewAction,
+} from "./components/ReviewActionSheet";
 import { SwipeCoach } from "./components/SwipeCoach";
 import { Toast, type ToastState } from "./components/Toast";
 import {
@@ -24,10 +28,15 @@ import {
 
 let historySeq = 0;
 
+type SheetMode =
+  | { type: "keep" }
+  | { type: ReviewAction }
+  | null;
+
 export default function App() {
   const [cards, setCards] = useState<ReviewCard[]>(() => cloneReviews());
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetMode, setSheetMode] = useState<SheetMode>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<number | null>(null);
@@ -48,6 +57,7 @@ export default function App() {
 
   const top = readyCards[0] ?? null;
   const canRewind = history.length > 0;
+  const sheetOpen = sheetMode != null;
   const coaching = coachStep != null;
 
   const clearToastTimer = useCallback(() => {
@@ -145,31 +155,31 @@ export default function App() {
     showToast(`Rewound · ${latest.card.title}`);
   }
 
-  function mergeCard(card: ReviewCard) {
-    if (coaching) {
-      handlePractice("merge");
-      return;
-    }
+  function mergeCard(card: ReviewCard, comment?: string) {
     setCards((prev) =>
       prev.map((c) => (c.id === card.id ? { ...c, status: "merged" } : c)),
     );
-    const entry = pushHistory(card, "merge");
-    showToast(`Merged · ${card.title}`, {
+    setSheetMode(null);
+    const entry = pushHistory(card, "merge", comment);
+    const message = comment
+      ? `Merged · “${comment}” · ${card.title}`
+      : `Merged · ${card.title}`;
+    showToast(message, {
       actionLabel: "Undo",
       onAction: () => restoreFromEntry(entry),
     });
   }
 
-  function rejectCard(card: ReviewCard) {
-    if (coaching) {
-      handlePractice("reject");
-      return;
-    }
+  function rejectCard(card: ReviewCard, comment?: string) {
     setCards((prev) =>
       prev.map((c) => (c.id === card.id ? { ...c, status: "rejected" } : c)),
     );
-    const entry = pushHistory(card, "reject");
-    showToast(`Rejected · ${card.title}`, {
+    setSheetMode(null);
+    const entry = pushHistory(card, "reject", comment);
+    const message = comment
+      ? `Rejected · “${comment}” · ${card.title}`
+      : `Rejected · ${card.title}`;
+    showToast(message, {
       actionLabel: "Undo",
       onAction: () => restoreFromEntry(entry),
     });
@@ -187,7 +197,7 @@ export default function App() {
       );
       return [...ready, ...waiting, ...done];
     });
-    setSheetOpen(false);
+    setSheetMode(null);
     const entry = pushHistory(card, "keep", followUp);
     showToast(`Follow-up sent · “${followUp}” · agent resumed`, {
       actionLabel: "Undo",
@@ -195,12 +205,14 @@ export default function App() {
     });
   }
 
-  function handleSwipe(action: SwipeAction, card: ReviewCard) {
-    if (action === "merge") mergeCard(card);
-    else if (action === "reject") rejectCard(card);
-    else {
-      setSheetOpen(true);
-    }
+  function openSheet(mode: SheetMode) {
+    setSheetMode(mode);
+  }
+
+  function handleSwipe(action: SwipeAction, _card: ReviewCard) {
+    if (action === "merge") openSheet({ type: "merge" });
+    else if (action === "reject") openSheet({ type: "reject" });
+    else openSheet({ type: "keep" });
   }
 
   function onKeepGoing() {
@@ -208,13 +220,13 @@ export default function App() {
       handlePractice("keep");
       return;
     }
-    setSheetOpen(true);
+    openSheet({ type: "keep" });
   }
 
   function resetDemo() {
     clearToastTimer();
     setToast(null);
-    setSheetOpen(false);
+    setSheetMode(null);
     setHistoryOpen(false);
     setHistory([]);
     setCards(cloneReviews());
@@ -272,8 +284,12 @@ export default function App() {
             disabled={!top || sheetOpen || historyOpen || demoNudge}
             canRewind={canRewind && !coaching}
             highlight={coachStep}
-            onMerge={() => top && mergeCard(top)}
-            onReject={() => top && rejectCard(top)}
+            onMerge={() =>
+              coaching ? handlePractice("merge") : openSheet({ type: "merge" })
+            }
+            onReject={() =>
+              coaching ? handlePractice("reject") : openSheet({ type: "reject" })
+            }
             onKeepGoing={onKeepGoing}
             onRewind={rewindLast}
           />
@@ -281,10 +297,26 @@ export default function App() {
       )}
 
       <KeepGoingSheet
-        open={sheetOpen && !!top && !coaching}
+        open={sheetMode?.type === "keep" && !!top && !coaching}
         title={top?.title ?? ""}
-        onClose={() => setSheetOpen(false)}
+        onClose={() => setSheetMode(null)}
         onSend={(message) => top && markWaiting(top, message)}
+      />
+
+      <ReviewActionSheet
+        open={
+          !coaching &&
+          (sheetMode?.type === "merge" || sheetMode?.type === "reject") &&
+          !!top
+        }
+        action={sheetMode?.type === "reject" ? "reject" : "merge"}
+        title={top?.title ?? ""}
+        onClose={() => setSheetMode(null)}
+        onConfirm={(comment) => {
+          if (!top) return;
+          if (sheetMode?.type === "reject") rejectCard(top, comment);
+          else mergeCard(top, comment);
+        }}
       />
 
       <HistorySheet

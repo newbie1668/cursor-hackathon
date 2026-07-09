@@ -3,36 +3,55 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CommentField } from "./CommentField";
 import "./KeepGoingSheet.css";
 
-const CHIPS = [
-  "Add tests",
-  "Fix types",
-  "Smaller diff",
-  "Explain riskier files",
-];
+const MERGE_CHIPS = ["LGTM", "Ship it", "Looks good, minor nits"];
+const REJECT_CHIPS = ["Needs tests", "Too risky", "Wrong approach"];
 
-interface KeepGoingSheetProps {
+export type ReviewAction = "merge" | "reject";
+
+interface ReviewActionSheetProps {
   open: boolean;
+  action: ReviewAction;
   title: string;
   onClose: () => void;
-  onSend: (message: string) => void;
+  onConfirm: (comment?: string) => void;
 }
 
-export function KeepGoingSheet({
+const ACTION_COPY: Record<
+  ReviewAction,
+  { heading: string; sub: string; confirm: string; placeholder: string }
+> = {
+  merge: {
+    heading: "Merge",
+    sub: "Approve and merge",
+    confirm: "Merge",
+    placeholder: "e.g. LGTM — nice cleanup on the auth middleware",
+  },
+  reject: {
+    heading: "Reject",
+    sub: "Send back without merging",
+    confirm: "Reject",
+    placeholder: "e.g. Needs integration tests before we ship this",
+  },
+};
+
+export function ReviewActionSheet({
   open,
+  action,
   title,
   onClose,
-  onSend,
-}: KeepGoingSheetProps) {
+  onConfirm,
+}: ReviewActionSheetProps) {
   const [text, setText] = useState("");
+  const copy = ACTION_COPY[action];
+  const chips = action === "merge" ? MERGE_CHIPS : REJECT_CHIPS;
 
   useEffect(() => {
     if (open) setText("");
-  }, [open]);
+  }, [open, action]);
 
-  function submit(message: string) {
-    const trimmed = message.trim();
-    if (!trimmed) return;
-    onSend(trimmed);
+  function confirm(comment?: string) {
+    const trimmed = comment?.trim();
+    onConfirm(trimmed || undefined);
   }
 
   return (
@@ -42,7 +61,7 @@ export function KeepGoingSheet({
           <motion.button
             type="button"
             className="sheet-backdrop"
-            aria-label="Close keep going sheet"
+            aria-label={`Close ${action} sheet`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -52,34 +71,35 @@ export function KeepGoingSheet({
             className="keep-going-sheet"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="keep-going-title"
+            aria-labelledby={`${action}-sheet-title`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 36 }}
           >
             <div className="sheet-handle" aria-hidden />
-            <h3 id="keep-going-title">Keep going</h3>
+            <h3 id={`${action}-sheet-title`}>{copy.heading}</h3>
             <p className="sheet-sub">
-              Send a follow-up to the agent working on{" "}
+              {copy.sub} for{" "}
               <span className="sheet-card-title">{title}</span>
+              . Add an optional comment for the agent.
             </p>
             <div className="chip-row">
-              {CHIPS.map((chip) => (
+              {chips.map((chip) => (
                 <button
                   key={chip}
                   type="button"
                   className="follow-chip"
-                  onClick={() => submit(chip)}
+                  onClick={() => confirm(chip)}
                 >
                   {chip}
                 </button>
               ))}
             </div>
             <CommentField
-              id="follow-up-input"
-              label="Custom follow-up"
-              placeholder="e.g. Add a test for the empty-cart case"
+              id={`${action}-comment-input`}
+              label="Comment"
+              placeholder={copy.placeholder}
               value={text}
               onChange={setText}
             />
@@ -89,11 +109,10 @@ export function KeepGoingSheet({
               </button>
               <button
                 type="button"
-                className="btn keep"
-                disabled={!text.trim()}
-                onClick={() => submit(text)}
+                className={`btn ${action}`}
+                onClick={() => confirm(text)}
               >
-                Send
+                {text.trim() ? `${copy.confirm} with comment` : copy.confirm}
               </button>
             </div>
           </motion.div>
