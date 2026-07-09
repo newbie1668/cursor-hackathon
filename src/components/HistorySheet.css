@@ -16,10 +16,10 @@
   max-height: min(78%, 560px);
   display: flex;
   flex-direction: column;
-  padding: 12px 0 20px;
+  padding: 12px 0 max(20px, env(safe-area-inset-bottom));
   background: var(--surface);
   border-top: 1px solid var(--hairline);
-  border-radius: 16px 16px 0 0;
+  border-radius: 24px 24px 0 0;
 }
 
 .history-sheet .sheet-handle {
@@ -97,8 +97,8 @@
   gap: 12px;
   padding: 12px;
   margin-bottom: 8px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
+  border: none;
+  border-radius: 16px;
   background: var(--canvas);
 }
 
@@ -117,29 +117,26 @@
 .history-action {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--hairline);
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  border: none;
 }
 
 .history-action.action-merge {
   color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--hairline));
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
 
 .history-action.action-reject {
   color: var(--reject);
-  border-color: color-mix(in srgb, var(--reject) 40%, var(--hairline));
-  background: color-mix(in srgb, var(--reject) 8%, var(--surface));
+  background: color-mix(in srgb, var(--reject) 10%, var(--surface));
 }
 
 .history-action.action-keep {
-  color: var(--keep-going);
-  border-color: color-mix(in srgb, var(--keep-going) 40%, var(--hairline));
-  background: var(--waiting-bg);
+  color: var(--action-blue);
+  background: color-mix(in srgb, var(--action-blue) 10%, var(--surface));
 }
 
 .history-time {
@@ -192,15 +189,16 @@
 .history-restore {
   flex: 0 0 auto;
   align-self: center;
-  border: 1px solid var(--hairline);
+  border: none;
   background: var(--surface);
-  border-radius: var(--radius);
-  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 500;
   color: var(--ink);
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 
 .history-restore:hover {
-  border-color: var(--border-medium);
+  background: var(--surface-muted);
 }

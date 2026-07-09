@@ -6,8 +6,8 @@
   justify-content: center;
   padding: 24px 16px;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 78, 0, 0.08), transparent),
-    linear-gradient(180deg, #f2f1ed 0%, var(--canvas) 40%, #efece6 100%);
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(38, 37, 30, 0.06), transparent),
+    linear-gradient(180deg, #ebeae4 0%, var(--canvas) 45%, #e8e6df 100%);
 }
 
 .phone-frame {
@@ -17,7 +17,7 @@
   max-height: 100%;
   background: var(--canvas);
   border: 1px solid var(--hairline);
-  border-radius: 28px;
+  border-radius: 40px;
   box-shadow: var(--shadow-phone);
   overflow: hidden;
 }
@@ -27,41 +27,64 @@
   top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  width: 96px;
-  height: 22px;
+  width: 110px;
+  height: 28px;
   border-radius: 999px;
-  background: var(--ink);
+  background: #0a0a08;
   z-index: 20;
-  opacity: 0.92;
 }
 
 .approval-shell {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding-top: 40px;
+  padding-top: 44px;
   position: relative;
+  background: var(--canvas);
 }
 
 .shell-header {
   flex: 0 0 auto;
-  padding: 8px 20px 12px;
+  padding: 4px 18px 10px;
 }
 
-.brand-row {
+.nav-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  min-height: 40px;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: block;
+}
+
+.brand-wordmark {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1;
 }
 
 .history-btn {
-  margin-left: auto;
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 1px solid var(--hairline);
-  background: var(--surface);
+  border: none;
+  background: transparent;
   color: var(--ink);
   display: grid;
   place-items: center;
@@ -70,93 +93,37 @@
 }
 
 .history-btn:hover {
-  border-color: var(--border-medium);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .history-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--ink);
+  color: var(--canvas);
   font-size: 10px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 16px;
   text-align: center;
 }
 
-.brand-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: var(--ink);
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-}
-
-.brand-mark-plus {
-  position: relative;
-  width: 14px;
-  height: 14px;
-}
-
-.brand-mark-plus::before,
-.brand-mark-plus::after {
-  content: "";
-  position: absolute;
-  background: var(--accent);
-  border-radius: 1px;
-}
-
-.brand-mark-plus::before {
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2.5px;
-  transform: translateY(-50%);
-}
-
-.brand-mark-plus::after {
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2.5px;
-  transform: translateX(-50%);
-}
-
-.brand-text {
-  min-width: 0;
-}
-
-.brand-name {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-
 .mode-title {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
-}
-
-.mode-sub {
-  margin: 8px 0 10px;
-  font-size: 14px;
-  color: var(--muted);
+  margin: 14px 0 8px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  color: var(--ink);
 }
 
 .queue-meta {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
@@ -164,17 +131,24 @@
 .queue-count,
 .waiting-count {
   font-size: 12px;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--hairline);
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: none;
   color: var(--muted);
-  background: var(--surface);
+  background: var(--surface-muted);
 }
 
 .waiting-count {
   color: var(--keep-going);
   background: var(--waiting-bg);
-  border-color: color-mix(in srgb, var(--keep-going) 30%, var(--hairline));
+}
+
+.queue-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.01em;
 }
 
 .empty-state {
@@ -191,7 +165,7 @@
 .empty-state h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 400;
+  font-weight: 600;
   letter-spacing: -0.03em;
 }
 
@@ -206,7 +180,7 @@
 }
 
 .btn {
-  border-radius: var(--radius);
+  border-radius: 999px;
   padding: 12px 18px;
   font-size: 14px;
   font-weight: 500;
@@ -214,7 +188,7 @@
 }
 
 .btn.ghost {
-  background: transparent;
+  background: var(--surface);
   border-color: var(--hairline);
   color: var(--ink);
 }
