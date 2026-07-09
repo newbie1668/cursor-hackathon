@@ -52,22 +52,17 @@ function SwipeableCard({
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-12, 12]);
-  const [exiting, setExiting] = useState<"merge" | "reject" | null>(null);
   const [hint, setHint] = useState({ merge: 0, reject: 0, keep: 0 });
 
-  function commitMergeOrReject(action: "merge" | "reject") {
-    if (exiting || locked) return;
-    setExiting(action);
-    window.setTimeout(() => onSwipe(action, card), 260);
-  }
-
-  function commitKeep() {
-    if (exiting || locked) return;
-    setHint({ merge: 0, reject: 0, keep: 1 });
+  function commitAction(action: SwipeAction) {
+    if (locked) return;
+    setHint({ merge: 0, reject: 0, keep: action === "keep" ? 1 : 0 });
     x.set(0);
     y.set(0);
-    onSwipe("keep", card);
-    window.setTimeout(() => setHint({ merge: 0, reject: 0, keep: 0 }), 200);
+    onSwipe(action, card);
+    if (action === "keep") {
+      window.setTimeout(() => setHint({ merge: 0, reject: 0, keep: 0 }), 200);
+    }
   }
 
   function onDrag(_: unknown, info: PanInfo) {
@@ -92,44 +87,34 @@ function SwipeableCard({
     const goReject = offset.x < REJECT_X || (offset.x < -70 && velocity.x < -700);
 
     if (goKeep && Math.abs(offset.y) >= Math.abs(offset.x) * 0.85) {
-      commitKeep();
+      commitAction("keep");
       return;
     }
     if (goMerge) {
-      commitMergeOrReject("merge");
+      commitAction("merge");
       return;
     }
     if (goReject) {
-      commitMergeOrReject("reject");
+      commitAction("reject");
       return;
     }
     setHint({ merge: 0, reject: 0, keep: 0 });
   }
 
-  const exitX = exiting === "merge" ? 420 : exiting === "reject" ? -420 : 0;
-
   return (
     <motion.div
       className="stack-layer top-card"
       style={{ x, y, rotate, zIndex: 3 }}
-      drag={locked || exiting ? false : true}
+      drag={locked ? false : true}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.9}
       onDrag={onDrag}
       onDragEnd={onDragEnd}
-      animate={
-        exiting
-          ? { x: exitX, y: 0, opacity: 0, transition: { duration: 0.28 } }
-          : { x: 0, y: 0, opacity: 1 }
-      }
+      animate={{ x: 0, y: 0, opacity: 1 }}
     >
       <ReviewCardView
         card={card}
-        dragHint={{
-          merge: exiting === "merge" ? 1 : hint.merge,
-          reject: exiting === "reject" ? 1 : hint.reject,
-          keep: hint.keep,
-        }}
+        dragHint={hint}
       />
     </motion.div>
   );
