@@ -1,29 +1,63 @@
 .swipe-coach-overlay {
   position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 128px;
-  z-index: 35;
+  left: 16px;
+  right: 16px;
+  top: 118px;
+  z-index: 30;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 14px 16px 12px;
+  padding: 12px 14px 14px;
   border-radius: 18px;
-  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  background: color-mix(in srgb, var(--ink) 92%, transparent);
   color: var(--canvas);
   text-align: center;
   pointer-events: auto;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 12px 32px rgba(38, 37, 30, 0.22);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 36px rgba(38, 37, 30, 0.28);
+}
+
+.coach-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.coach-step-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--canvas) 65%, transparent);
+}
+
+.coach-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--canvas) 12%, transparent);
+  color: var(--canvas);
+  font-size: 14px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.coach-close:hover {
+  background: color-mix(in srgb, var(--canvas) 22%, transparent);
 }
 
 .coach-stamp {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  padding: 4px 10px;
-  margin-bottom: 4px;
+  letter-spacing: 0.1em;
+  padding: 5px 12px;
+  margin: 4px 0 2px;
   border: 2px solid currentColor;
   border-radius: 6px;
   transform: rotate(-8deg);
@@ -50,15 +84,15 @@
 
 .coach-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
 .coach-detail {
   margin: 0;
-  font-size: 12px;
-  color: color-mix(in srgb, var(--canvas) 70%, transparent);
+  font-size: 13px;
+  color: color-mix(in srgb, var(--canvas) 72%, transparent);
 }
 
 .coach-progress {
@@ -68,29 +102,57 @@
 }
 
 .coach-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--canvas) 28%, transparent);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .coach-dot.active {
   background: var(--canvas);
-  transform: scale(1.15);
+  transform: scale(1.25);
 }
 
 .coach-dot.done {
-  background: color-mix(in srgb, var(--canvas) 55%, transparent);
+  background: color-mix(in srgb, var(--canvas) 60%, transparent);
+}
+
+.coach-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.coach-try {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 16px;
+}
+
+.coach-try:hover {
+  background: #fff;
 }
 
 .coach-skip {
-  margin-top: 6px;
+  width: 100%;
   border: none;
   background: transparent;
-  color: color-mix(in srgb, var(--canvas) 55%, transparent);
-  font-size: 12px;
+  color: color-mix(in srgb, var(--canvas) 70%, transparent);
+  font-size: 13px;
   font-weight: 500;
-  padding: 4px 8px;
+  padding: 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .coach-skip:hover {
