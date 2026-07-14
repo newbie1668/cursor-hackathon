@@ -8,6 +8,8 @@ export type TaskCategory =
   | "Save"
   | "Do";
 
+export type AnalyzeStatus = "pending" | "reading" | "ready" | "error";
+
 export interface Capture {
   id: string;
   imageDataUrl: string;
@@ -15,6 +17,11 @@ export interface Capture {
   createdAt: number;
   note?: string;
   categorized: boolean;
+  labels: string[];
+  ocrText?: string;
+  suggestedTitle?: string;
+  suggestedCategory?: TaskCategory;
+  analyzeStatus: AnalyzeStatus;
 }
 
 export interface Task {
@@ -23,6 +30,7 @@ export interface Task {
   intro: string;
   category: TaskCategory;
   sourceKind: SourceKind;
+  labels: string[];
   captureId?: string;
   createdAt: number;
   done: boolean;
@@ -34,6 +42,9 @@ export interface ChatMessage {
   text: string;
   at: number;
   taskIds?: string[];
+  previewUrl?: string;
+  labels?: string[];
+  captureId?: string;
 }
 
 export type TabId = "captures" | "talk" | "tasks";

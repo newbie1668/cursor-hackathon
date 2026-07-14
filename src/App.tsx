@@ -8,6 +8,9 @@ import {
 } from "./components/CreateTaskSheet";
 import { DetailSheet } from "./components/DetailSheet";
 import { TodoList } from "./components/TodoList";
+import {
+  analyzeScreenshot,
+} from "./lib/analyzeScreenshot";
 import { assistantWelcome, categorizeFromTalk } from "./lib/categorize";
 import { uid } from "./lib/id";
 import { detectSourceFromFilename } from "./lib/source";
@@ -23,7 +26,8 @@ function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error ?? new Error("Could not read file"));
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("Could not read file"));
     reader.readAsDataURL(file);
   });
 }
@@ -37,6 +41,21 @@ function noteFromFilename(name: string): string {
   return base;
 }
 
+function normalizeCapture(raw: Capture): Capture {
+  return {
+    ...raw,
+    labels: raw.labels ?? [],
+    analyzeStatus: raw.analyzeStatus ?? "ready",
+  };
+}
+
+function normalizeTask(raw: Task): Task {
+  return {
+    ...raw,
+    labels: raw.labels ?? [],
+  };
+}
+
 export default function App() {
   const [captures, setCaptures] = useState<Capture[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -48,8 +67,8 @@ export default function App() {
 
   useEffect(() => {
     const state = loadState();
-    setCaptures(state.captures);
-    setTasks(state.tasks);
+    setCaptures(state.captures.map(normalizeCapture));
+    setTasks(state.tasks.map(normalizeTask));
     setMessages(state.messages.length ? state.messages : [assistantWelcome()]);
     setHydrated(true);
   }, []);
@@ -79,6 +98,50 @@ export default function App() {
     return null;
   })();
 
+  async function analyzeCapture(capture: Capture) {
+    setCaptures((prev) =>
+      prev.map((c) =>
+        c.id === capture.id ? { ...c, analyzeStatus: "reading" } : c,
+      ),
+    );
+
+    const analysis = await analyzeScreenshot(
+      capture.imageDataUrl,
+      capture.note ?? "Screenshot",
+    );
+
+    setCaptures((prev) =>
+      prev.map((c) =>
+        c.id === capture.id
+          ? {
+              ...c,
+              sourceKind:
+                c.sourceKind === "other" ? analysis.sourceKind : c.sourceKind,
+              note: analysis.title,
+              suggestedTitle: analysis.title,
+              suggestedCategory: analysis.category,
+              labels: analysis.labels,
+              ocrText: analysis.ocrText,
+              analyzeStatus: "ready",
+            }
+          : c,
+      ),
+    );
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: uid("msg"),
+        role: "assistant",
+        text: `${analysis.summary} Say “file it” to add this to your to-do list, or tell me how to categorize it.`,
+        at: Date.now(),
+        previewUrl: capture.imageDataUrl,
+        labels: analysis.labels,
+        captureId: capture.id,
+      },
+    ]);
+  }
+
   async function handleUpload(files: File[]) {
     const created: Capture[] = [];
     const failures: string[] = [];
@@ -93,6 +156,8 @@ export default function App() {
           createdAt: Date.now(),
           note: noteFromFilename(file.name),
           categorized: false,
+          labels: [],
+          analyzeStatus: "pending",
         });
       } catch {
         failures.push(file.name || "image");
@@ -114,26 +179,28 @@ export default function App() {
     }
 
     setCaptures((prev) => [...created, ...prev]);
-    const n = created.length;
     setMessages((prev) => [
       ...prev,
       {
         id: uid("msg"),
         role: "assistant",
         text:
-          (n === 1
-            ? "Got your screenshot from Photos."
-            : `Got ${n} screenshots from Photos.`) +
-          " Tell me how to file " +
-          (n === 1 ? "it" : "them") +
-          " — watch, follow up, read, research, or save." +
+          (created.length === 1
+            ? "Got your screenshot — reading it now…"
+            : `Got ${created.length} screenshots — reading them now…`) +
           (failures.length
-            ? ` (Skipped ${failures.length} that couldn’t be read.)`
+            ? ` (Skipped ${failures.length} that couldn’t be opened.)`
             : ""),
         at: Date.now(),
+        previewUrl: created[0]?.imageDataUrl,
+        captureId: created[0]?.id,
       },
     ]);
     setTab("talk");
+
+    for (const capture of created) {
+      await analyzeCapture(capture);
+    }
   }
 
   function handleTalk(text: string) {
@@ -154,12 +221,20 @@ export default function App() {
       );
     }
 
+    const firstTask = result.tasks[0];
+    const firstCapture = firstTask?.captureId
+      ? captures.find((c) => c.id === firstTask.captureId)
+      : undefined;
+
     const assistantMsg: ChatMessage = {
       id: uid("msg"),
       role: "assistant",
       text: result.reply,
       at: Date.now(),
       taskIds: result.tasks.map((t) => t.id),
+      previewUrl: firstCapture?.imageDataUrl,
+      labels: firstTask?.labels,
+      captureId: firstCapture?.id,
     };
 
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
@@ -176,6 +251,7 @@ export default function App() {
       intro: input.intro,
       category: input.category,
       sourceKind: input.sourceKind,
+      labels: input.labels,
       createdAt: Date.now(),
       done: false,
     };
@@ -257,12 +333,14 @@ export default function App() {
           messages={messages}
           openCaptures={openCaptures}
           onSend={handleTalk}
+          onOpenCapture={(id) => setDetail({ kind: "capture", id })}
         />
       )}
 
       {tab === "tasks" && (
         <TodoList
           tasks={tasks}
+          captures={captures}
           onOpen={(id) => setDetail({ kind: "task", id })}
           onToggleDone={toggleDone}
           onCreate={() => setCreateOpen(true)}

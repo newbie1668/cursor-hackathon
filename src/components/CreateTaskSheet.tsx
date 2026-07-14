@@ -9,6 +9,7 @@ export interface NewTaskInput {
   intro: string;
   category: TaskCategory;
   sourceKind: SourceKind;
+  labels: string[];
 }
 
 interface CreateTaskSheetProps {
@@ -45,6 +46,7 @@ export function CreateTaskSheet({
         `Manual task · ${SOURCE_LABEL[sourceKind]} · filed from ShotList.`,
       category,
       sourceKind,
+      labels: [SOURCE_LABEL[sourceKind], category],
     });
   }
 

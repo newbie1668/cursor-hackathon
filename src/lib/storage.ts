@@ -2,7 +2,7 @@ import { assistantWelcome } from "./categorize";
 import { seedCaptures, seedTasks } from "../data/seed";
 import type { Capture, ChatMessage, Task } from "../types";
 
-const KEY = "shotlist-v1";
+const KEY = "shotlist-v2";
 
 export interface AppState {
   captures: Capture[];

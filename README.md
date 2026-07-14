@@ -22,11 +22,11 @@ npm run preview
 
 | Action | Result |
 |--------|--------|
-| **Add screenshot** | Upload / camera capture lands in Captures |
-| **Talk** | Type or dictate (“Watch the YouTube video about system design”) |
-| **Tasks** | Dated list with a brief intro per item |
+| **Choose from Photos** | Pick existing screenshots (multi-select) |
+| **AI read** | On-device OCR reads the shot, creates labels, shows a preview |
+| **Talk** | Type or dictate (“file it”, “Watch this…”) |
+| **Tasks** | Dated list with labels + screenshot preview |
 | **Tap a task** | Revisit the linked screenshot |
-| **New task** | Create a manual task without a capture |
 
 Categories: Watch · Follow up · Read · Research · Save · Do
 

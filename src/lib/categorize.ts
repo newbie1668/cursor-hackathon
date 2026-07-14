@@ -17,7 +17,7 @@ function extractQuoted(text: string): string | null {
   return m?.[1]?.trim() ?? null;
 }
 
-function inferCategory(text: string): TaskCategory {
+function inferCategory(text: string, capture?: Capture): TaskCategory {
   const t = text.toLowerCase();
   if (/\bwatch\b|\bvideo\b|\byoutube\b|\bstream\b/.test(t)) return "Watch";
   if (
@@ -32,62 +32,62 @@ function inferCategory(text: string): TaskCategory {
     return "Research";
   }
   if (/\bsave\b|\bbookmark\b|\bkeep\b|\breference\b/.test(t)) return "Save";
-  return "Do";
+  return capture?.suggestedCategory ?? "Do";
+}
+
+function topicFromCapture(capture: Capture, quoted: string | null): string {
+  return (
+    quoted ??
+    capture.suggestedTitle ??
+    capture.note ??
+    capture.labels.find((l) => !["YouTube", "LinkedIn", "Website", "Screenshot", "Video", "Profile", "Article", "Watch", "Follow up", "Read", "Research", "Save", "Do"].includes(l)) ??
+    SOURCE_LABEL[capture.sourceKind]
+  );
 }
 
 function defaultTitle(
   category: TaskCategory,
   sourceLabel: string,
-  quoted: string | null,
+  topic: string,
 ): string {
-  if (quoted) {
-    if (category === "Watch") return `Watch: ${quoted}`;
-    if (category === "Follow up") return `Follow up: ${quoted}`;
-    if (category === "Read") return `Read: ${quoted}`;
-    if (category === "Research") return `Research: ${quoted}`;
-    if (category === "Save") return `Save: ${quoted}`;
-    return quoted;
-  }
-  if (category === "Watch") return `Watch ${sourceLabel} video`;
-  if (category === "Follow up") return `Follow up on ${sourceLabel}`;
-  if (category === "Read") return `Read ${sourceLabel} page`;
-  if (category === "Research") return `Research from ${sourceLabel}`;
-  if (category === "Save") return `Saved ${sourceLabel} capture`;
-  return `Task from ${sourceLabel}`;
+  if (topic.toLowerCase().startsWith(category.toLowerCase())) return topic;
+  if (category === "Watch") return `Watch: ${topic}`;
+  if (category === "Follow up") return `Follow up: ${topic}`;
+  if (category === "Read") return `Read: ${topic}`;
+  if (category === "Research") return `Research: ${topic}`;
+  if (category === "Save") return `Save: ${topic}`;
+  return topic || `Task from ${sourceLabel}`;
 }
 
 function defaultIntro(
   category: TaskCategory,
-  sourceLabel: string,
-  quoted: string | null,
+  topic: string,
   userText: string,
+  labels: string[],
 ): string {
-  const topic = quoted ? `“${quoted}”` : `this ${sourceLabel.toLowerCase()} capture`;
+  const labelBit = labels.length ? ` Labels: ${labels.slice(0, 5).join(", ")}.` : "";
   if (category === "Watch") {
-    return `Queued to watch ${topic}. Reopen the screenshot when you’re ready.`;
+    return `Queued to watch “${topic}”.${labelBit} Reopen the screenshot when you’re ready.`;
   }
   if (category === "Follow up") {
-    return `Reach out about ${topic}. The profile screenshot is attached for context.`;
+    return `Reach out about “${topic}”.${labelBit} The profile screenshot is attached for context.`;
   }
   if (category === "Read") {
-    return `Reading list: ${topic}. Tap to revisit the page screenshot.`;
+    return `Reading list: “${topic}”.${labelBit} Tap to revisit the page screenshot.`;
   }
   if (category === "Research") {
-    return `Dig into ${topic}. Kept the original capture for reference.`;
+    return `Dig into “${topic}”.${labelBit} Kept the original capture for reference.`;
   }
   if (category === "Save") {
-    return `Saved for later — ${topic}.`;
+    return `Saved for later — “${topic}”.${labelBit}`;
   }
   const clipped = userText.trim().slice(0, 120);
   return clipped.length > 0
-    ? `From your note: ${clipped}${userText.trim().length > 120 ? "…" : ""}`
-    : `Task filed from a ${sourceLabel.toLowerCase()} screenshot.`;
+    ? `From your note: ${clipped}${userText.trim().length > 120 ? "…" : ""}${labelBit}`
+    : `Task filed from a screenshot.${labelBit}`;
 }
 
-function pickCaptures(
-  text: string,
-  captures: Capture[],
-): Capture[] {
+function pickCaptures(text: string, captures: Capture[]): Capture[] {
   const open = captures.filter((c) => !c.categorized);
   if (open.length === 0) return [];
 
@@ -109,13 +109,22 @@ function isGreeting(text: string): boolean {
 }
 
 function wantsList(text: string): boolean {
-  return /\b(show|list|what('s| is)|my)\b.*\b(todo|to-?do|task|list)\b/i.test(
-    text,
-  ) || /\bwhat do i (have|need)\b/i.test(text);
+  return (
+    /\b(show|list|what('s| is)|my)\b.*\b(todo|to-?do|task|list)\b/i.test(text) ||
+    /\bwhat do i (have|need)\b/i.test(text)
+  );
 }
 
 function wantsHelp(text: string): boolean {
   return /\b(help|how (do|does|can)|what can you)\b/i.test(text);
+}
+
+function wantsAutoFile(text: string): boolean {
+  return /\b(file|categorize|sort|add|create|make)\b.*\b(task|todo|to-?do|all)\b/i.test(
+    text,
+  ) || /^(file (it|them|this|all)|add (it|them|this)|categorize( (it|them|this|all))?)$/i.test(
+    text.trim(),
+  );
 }
 
 export function categorizeFromTalk(
@@ -126,7 +135,8 @@ export function categorizeFromTalk(
   const trimmed = text.trim();
   if (!trimmed) {
     return {
-      reply: "Say what you want to do with a screenshot — watch, follow up, read, research, or save.",
+      reply:
+        "Say what you want to do with a screenshot — watch, follow up, read, research, or save. Or say “file it” to use the labels I already read.",
       tasks: [],
       captureIds: [],
     };
@@ -137,8 +147,8 @@ export function categorizeFromTalk(
     return {
       reply:
         open > 0
-          ? `Hey — you’ve got ${open} uncategorized capture${open === 1 ? "" : "s"}. Tell me how to file them, e.g. “Watch the YouTube video about React hooks.”`
-          : "Hey — drop a screenshot, then tell me how to turn it into a task.",
+          ? `Hey — you’ve got ${open} uncategorized capture${open === 1 ? "" : "s"} with labels from the screenshots. Say “file it” or tell me how to sort them.`
+          : "Hey — drop a screenshot and I’ll read it, label it, and show a preview.",
       tasks: [],
       captureIds: [],
     };
@@ -147,7 +157,7 @@ export function categorizeFromTalk(
   if (wantsHelp(trimmed)) {
     return {
       reply:
-        "Upload screenshots of YouTube, LinkedIn, or websites. Then talk to me: “Add this LinkedIn profile to follow up” or “Read this article about pricing.” I’ll date each task and keep the shot so you can revisit.",
+        "Upload screenshots — I read them with on-device OCR, create labels, and show a preview. Then talk to me (“file it”, “Watch this”, “Follow up”) and I’ll date each task.",
       tasks: [],
       captureIds: [],
     };
@@ -157,7 +167,8 @@ export function categorizeFromTalk(
     const openTasks = existingTasks.filter((t) => !t.done);
     if (openTasks.length === 0) {
       return {
-        reply: "Your to-do list is empty. Capture something and tell me how to categorize it.",
+        reply:
+          "Your to-do list is empty. Capture something and I’ll read + label it.",
         tasks: [],
         captureIds: [],
       };
@@ -177,24 +188,33 @@ export function categorizeFromTalk(
   if (selected.length === 0) {
     return {
       reply:
-        "I don’t see an open screenshot to attach. Capture one first, then tell me how to categorize it — or create a task manually.",
+        "I don’t see an open screenshot to attach. Capture one first — I’ll read it and label it — or create a task manually.",
       tasks: [],
       captureIds: [],
     };
   }
 
   const quoted = extractQuoted(trimmed);
+  const auto = wantsAutoFile(trimmed);
   const tasks: Task[] = selected.map((capture) => {
     const sourceHint =
       detectSourceFromText(trimmed) ?? capture.sourceKind;
-    const category = inferCategory(trimmed);
+    const category = auto
+      ? (capture.suggestedCategory ?? inferCategory(trimmed, capture))
+      : inferCategory(trimmed, capture);
     const sourceLabel = SOURCE_LABEL[sourceHint];
+    const topic = topicFromCapture(capture, quoted);
+    const labels =
+      capture.labels.length > 0
+        ? capture.labels
+        : [SOURCE_LABEL[sourceHint], category];
     return {
       id: uid("task"),
-      title: defaultTitle(category, sourceLabel, quoted),
-      intro: defaultIntro(category, sourceLabel, quoted, trimmed),
+      title: defaultTitle(category, sourceLabel, topic),
+      intro: defaultIntro(category, topic, trimmed, labels),
       category,
       sourceKind: sourceHint,
+      labels,
       captureId: capture.id,
       createdAt: Date.now(),
       done: false,
@@ -217,7 +237,7 @@ export function assistantWelcome(): ChatMessage {
   return {
     id: uid("msg"),
     role: "assistant",
-    text: "Drop screenshots of YouTube, LinkedIn, or the web — then talk to me. I’ll sort them into a dated to-do list you can reopen later.",
+    text: "Drop screenshots of YouTube, LinkedIn, or the web. I’ll read them, create labels, show a preview, then help you file dated to-dos.",
     at: Date.now(),
   };
 }

@@ -20,11 +20,17 @@ export function DetailSheet({
   onToggleDone,
 }: DetailSheetProps) {
   const image = capture?.imageDataUrl;
-  const title = task?.title ?? capture?.note ?? "Capture";
+  const title =
+    task?.title ?? capture?.suggestedTitle ?? capture?.note ?? "Capture";
+  const labels = task?.labels?.length
+    ? task.labels
+    : (capture?.labels ?? []);
   const intro =
     task?.intro ??
     (capture
-      ? `${SOURCE_LABEL[capture.sourceKind]} screenshot · ready to categorize in Talk.`
+      ? capture.analyzeStatus === "reading" || capture.analyzeStatus === "pending"
+        ? "Reading this screenshot…"
+        : `${capture.labels.length ? `Labels: ${capture.labels.join(", ")}. ` : ""}${SOURCE_LABEL[capture.sourceKind]} screenshot · ready to categorize in Talk.`
       : "");
   const when = task?.createdAt ?? capture?.createdAt;
 
@@ -75,6 +81,16 @@ export function DetailSheet({
             )}
 
             {intro && <p className="sheet-intro">{intro}</p>}
+
+            {labels.length > 0 && (
+              <div className="sheet-labels">
+                {labels.map((label) => (
+                  <span key={label} className="label-chip">
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {image ? (
               <div className="sheet-shot">

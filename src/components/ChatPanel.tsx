@@ -8,9 +8,15 @@ interface ChatPanelProps {
   messages: ChatMessage[];
   openCaptures: number;
   onSend: (text: string) => void;
+  onOpenCapture?: (id: string) => void;
 }
 
-export function ChatPanel({ messages, openCaptures, onSend }: ChatPanelProps) {
+export function ChatPanel({
+  messages,
+  openCaptures,
+  onSend,
+  onOpenCapture,
+}: ChatPanelProps) {
   const [draft, setDraft] = useState("");
   const [interim, setInterim] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -58,8 +64,8 @@ export function ChatPanel({ messages, openCaptures, onSend }: ChatPanelProps) {
         <strong>Talk it into tasks</strong>
         <span>
           {openCaptures > 0
-            ? `${openCaptures} capture${openCaptures === 1 ? "" : "s"} ready to file`
-            : "Add a screenshot, then describe what to do"}
+            ? `${openCaptures} labeled capture${openCaptures === 1 ? "" : "s"} ready — say “file it”`
+            : "Add a screenshot — I’ll read it, label it, and preview it"}
         </span>
       </div>
 
@@ -73,7 +79,28 @@ export function ChatPanel({ messages, openCaptures, onSend }: ChatPanelProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.22 }}
             >
+              {msg.previewUrl && (
+                <button
+                  type="button"
+                  className="bubble-preview"
+                  onClick={() =>
+                    msg.captureId && onOpenCapture?.(msg.captureId)
+                  }
+                  aria-label="Open screenshot preview"
+                >
+                  <img src={msg.previewUrl} alt="" />
+                </button>
+              )}
               <p>{msg.text}</p>
+              {msg.labels && msg.labels.length > 0 && (
+                <div className="bubble-labels">
+                  {msg.labels.map((label) => (
+                    <span key={label} className="label-chip">
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -89,7 +116,7 @@ export function ChatPanel({ messages, openCaptures, onSend }: ChatPanelProps) {
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder='e.g. “Read the Stripe billing article”'
+            placeholder='e.g. “file it” or “Watch this video”'
             rows={2}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {

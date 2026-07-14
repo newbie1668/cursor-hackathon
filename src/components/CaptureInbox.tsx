@@ -20,6 +20,14 @@ function collectImageFiles(files: FileList | null): File[] {
   );
 }
 
+function statusLabel(capture: Capture): string | null {
+  if (capture.analyzeStatus === "reading" || capture.analyzeStatus === "pending") {
+    return "Reading…";
+  }
+  if (capture.analyzeStatus === "error") return "Needs review";
+  return null;
+}
+
 export function CaptureInbox({
   captures,
   onUpload,
@@ -34,11 +42,10 @@ export function CaptureInbox({
       <section className="hero-capture">
         <h1>Capture the scroll</h1>
         <p>
-          Pull screenshots from Photos — YouTube, LinkedIn, or any site — then
-          talk them into a dated to-do.
+          I’ll read your screenshots, create labels, and show a preview — then
+          you can talk them into to-dos.
         </p>
         <div className="capture-actions">
-          {/* No capture attr = photo library / files on iOS & Android */}
           <label className="capture-cta">
             <input
               type="file"
@@ -72,65 +79,82 @@ export function CaptureInbox({
 
       {open.length > 0 && (
         <p className="section-note">
-          {open.length} waiting to be categorized in Talk
+          {open.length} waiting — open Talk to file with the labels I found
         </p>
       )}
 
       <ul className="capture-grid">
-        {sorted.map((capture, i) => (
-          <motion.li
-            key={capture.id}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(i * 0.05, 0.25), duration: 0.28 }}
-          >
-            <button
-              type="button"
-              className="capture-card"
-              onClick={() => onOpenCapture(capture.id)}
+        {sorted.map((capture, i) => {
+          const reading = statusLabel(capture);
+          return (
+            <motion.li
+              key={capture.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(i * 0.05, 0.25), duration: 0.28 }}
             >
-              <div className="capture-thumb-wrap">
-                <img
-                  src={capture.imageDataUrl}
-                  alt=""
-                  className="capture-thumb"
-                />
-                {!capture.categorized && (
-                  <span className="capture-badge">New</span>
-                )}
-              </div>
-              <div className="capture-meta">
-                <div className="capture-meta-top">
-                  <span className={`source-pill ${capture.sourceKind}`}>
-                    {SOURCE_LABEL[capture.sourceKind]}
-                  </span>
-                  <time dateTime={new Date(capture.createdAt).toISOString()}>
-                    {relativeDay(capture.createdAt)}
-                  </time>
-                </div>
-                <p className="capture-note">
-                  {capture.note ?? "Untitled capture"}
-                </p>
-              </div>
-            </button>
-            {capture.sourceKind === "other" && (
-              <div
-                className="source-picker"
-                onClick={(e) => e.stopPropagation()}
+              <button
+                type="button"
+                className="capture-card"
+                onClick={() => onOpenCapture(capture.id)}
               >
-                {(["youtube", "linkedin", "website"] as const).map((kind) => (
-                  <button
-                    key={kind}
-                    type="button"
-                    onClick={() => onPickSource(capture.id, kind)}
+                <div className="capture-thumb-wrap">
+                  <img
+                    src={capture.imageDataUrl}
+                    alt=""
+                    className="capture-thumb"
+                  />
+                  {!capture.categorized && (
+                    <span className="capture-badge">
+                      {reading ?? "New"}
+                    </span>
+                  )}
+                </div>
+                <div className="capture-meta">
+                  <div className="capture-meta-top">
+                    <span className={`source-pill ${capture.sourceKind}`}>
+                      {SOURCE_LABEL[capture.sourceKind]}
+                    </span>
+                    <time dateTime={new Date(capture.createdAt).toISOString()}>
+                      {relativeDay(capture.createdAt)}
+                    </time>
+                  </div>
+                  <p className="capture-note">
+                    {capture.suggestedTitle ?? capture.note ?? "Untitled capture"}
+                  </p>
+                  {capture.labels.length > 0 && (
+                    <div className="capture-labels">
+                      {capture.labels.slice(0, 6).map((label) => (
+                        <span key={label} className="label-chip">
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </button>
+              {capture.sourceKind === "other" &&
+                capture.analyzeStatus === "ready" && (
+                  <div
+                    className="source-picker"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {SOURCE_LABEL[kind]}
-                  </button>
-                ))}
-              </div>
-            )}
-          </motion.li>
-        ))}
+                    {(["youtube", "linkedin", "website"] as const).map(
+                      (kind) => (
+                        <button
+                          key={kind}
+                          type="button"
+                          onClick={() => onPickSource(capture.id, kind)}
+                        >
+                          {SOURCE_LABEL[kind]}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                )}
+            </motion.li>
+          );
+        })}
       </ul>
     </div>
   );
