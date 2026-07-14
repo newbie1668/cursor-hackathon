@@ -23,9 +23,18 @@ function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
+    reader.onerror = () => reject(reader.error ?? new Error("Could not read file"));
     reader.readAsDataURL(file);
   });
+}
+
+function noteFromFilename(name: string): string {
+  const base = name.replace(/\.[^.]+$/, "").trim();
+  if (!base || /^(img_\d+|image|photo|screenshot)$/i.test(base)) {
+    return "Screenshot from Photos";
+  }
+  if (/^screenshot /i.test(base)) return base;
+  return base;
 }
 
 export default function App() {
@@ -70,24 +79,57 @@ export default function App() {
     return null;
   })();
 
-  async function handleUpload(file: File) {
-    const imageDataUrl = await readFileAsDataUrl(file);
-    const sourceKind = detectSourceFromFilename(file.name);
-    const capture: Capture = {
-      id: uid("cap"),
-      imageDataUrl,
-      sourceKind,
-      createdAt: Date.now(),
-      note: file.name.replace(/\.[^.]+$/, "") || "New screenshot",
-      categorized: false,
-    };
-    setCaptures((prev) => [capture, ...prev]);
+  async function handleUpload(files: File[]) {
+    const created: Capture[] = [];
+    const failures: string[] = [];
+
+    for (const file of files) {
+      try {
+        const imageDataUrl = await readFileAsDataUrl(file);
+        created.push({
+          id: uid("cap"),
+          imageDataUrl,
+          sourceKind: detectSourceFromFilename(file.name),
+          createdAt: Date.now(),
+          note: noteFromFilename(file.name),
+          categorized: false,
+        });
+      } catch {
+        failures.push(file.name || "image");
+      }
+    }
+
+    if (created.length === 0) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid("msg"),
+          role: "assistant",
+          text: "Couldn’t read that image. Try a PNG or JPEG screenshot from Photos.",
+          at: Date.now(),
+        },
+      ]);
+      setTab("talk");
+      return;
+    }
+
+    setCaptures((prev) => [...created, ...prev]);
+    const n = created.length;
     setMessages((prev) => [
       ...prev,
       {
         id: uid("msg"),
         role: "assistant",
-        text: `Got a new ${sourceKind === "other" ? "screenshot" : sourceKind} capture. Tell me how to file it — watch, follow up, read, research, or save.`,
+        text:
+          (n === 1
+            ? "Got your screenshot from Photos."
+            : `Got ${n} screenshots from Photos.`) +
+          " Tell me how to file " +
+          (n === 1 ? "it" : "them") +
+          " — watch, follow up, read, research, or save." +
+          (failures.length
+            ? ` (Skipped ${failures.length} that couldn’t be read.)`
+            : ""),
         at: Date.now(),
       },
     ]);

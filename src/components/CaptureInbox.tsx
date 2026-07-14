@@ -6,9 +6,18 @@ import "./CaptureInbox.css";
 
 interface CaptureInboxProps {
   captures: Capture[];
-  onUpload: (file: File) => void;
+  onUpload: (files: File[]) => void;
   onOpenCapture: (id: string) => void;
   onPickSource: (id: string, kind: Capture["sourceKind"]) => void;
+}
+
+function collectImageFiles(files: FileList | null): File[] {
+  if (!files?.length) return [];
+  return Array.from(files).filter(
+    (file) =>
+      file.type.startsWith("image/") ||
+      /\.(png|jpe?g|webp|heic|heif|gif)$/i.test(file.name),
+  );
 }
 
 export function CaptureInbox({
@@ -25,23 +34,40 @@ export function CaptureInbox({
       <section className="hero-capture">
         <h1>Capture the scroll</h1>
         <p>
-          Screenshot YouTube, LinkedIn, or any site — then talk it into a dated
-          to-do.
+          Pull screenshots from Photos — YouTube, LinkedIn, or any site — then
+          talk them into a dated to-do.
         </p>
-        <label className="capture-cta">
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onUpload(file);
-              e.currentTarget.value = "";
-            }}
-          />
-          <span>Add screenshot</span>
-        </label>
+        <div className="capture-actions">
+          {/* No capture attr = photo library / files on iOS & Android */}
+          <label className="capture-cta">
+            <input
+              type="file"
+              accept="image/*,.heic,.heif"
+              multiple
+              className="sr-only"
+              onChange={(e) => {
+                const images = collectImageFiles(e.target.files);
+                if (images.length) onUpload(images);
+                e.currentTarget.value = "";
+              }}
+            />
+            <span>Choose from Photos</span>
+          </label>
+          <label className="capture-cta secondary">
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sr-only"
+              onChange={(e) => {
+                const images = collectImageFiles(e.target.files);
+                if (images.length) onUpload(images);
+                e.currentTarget.value = "";
+              }}
+            />
+            <span>Take photo</span>
+          </label>
+        </div>
       </section>
 
       {open.length > 0 && (
@@ -88,7 +114,10 @@ export function CaptureInbox({
               </div>
             </button>
             {capture.sourceKind === "other" && (
-              <div className="source-picker" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="source-picker"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {(["youtube", "linkedin", "website"] as const).map((kind) => (
                   <button
                     key={kind}
