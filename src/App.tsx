@@ -1,254 +1,351 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActionHints } from "./components/ActionHints";
-import { ApprovalShell } from "./components/ApprovalShell";
-import { CardStack, type SwipeAction } from "./components/CardStack";
+import { useEffect, useMemo, useState } from "react";
+import { AppShell } from "./components/AppShell";
+import { CaptureInbox } from "./components/CaptureInbox";
+import { ChatPanel } from "./components/ChatPanel";
 import {
-  HistorySheet,
-  type HistoryEntry,
-} from "./components/HistorySheet";
-import { KeepGoingSheet } from "./components/KeepGoingSheet";
+  CreateTaskSheet,
+  type NewTaskInput,
+} from "./components/CreateTaskSheet";
+import { DetailSheet } from "./components/DetailSheet";
+import { TodoList } from "./components/TodoList";
 import {
-  ReviewActionSheet,
-  type ReviewAction,
-} from "./components/ReviewActionSheet";
-import { Toast, type ToastState } from "./components/Toast";
-import {
-  cloneReviews,
-  type ReviewCard,
-} from "./data/reviews";
+  analyzeScreenshot,
+} from "./lib/analyzeScreenshot";
+import { assistantWelcome, categorizeFromTalk } from "./lib/categorize";
+import { uid } from "./lib/id";
+import { detectSourceFromFilename } from "./lib/source";
+import { defaultState, loadState, saveState } from "./lib/storage";
+import type { Capture, ChatMessage, TabId, Task } from "./types";
 
-let historySeq = 0;
-
-type SheetMode =
-  | { type: "keep" }
-  | { type: ReviewAction }
+type DetailState =
+  | { kind: "task"; id: string }
+  | { kind: "capture"; id: string }
   | null;
 
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function noteFromFilename(name: string): string {
+  const base = name.replace(/\.[^.]+$/, "").trim();
+  if (!base || /^(img_\d+|image|photo|screenshot)$/i.test(base)) {
+    return "Screenshot from Photos";
+  }
+  if (/^screenshot /i.test(base)) return base;
+  return base;
+}
+
+function normalizeCapture(raw: Capture): Capture {
+  return {
+    ...raw,
+    labels: raw.labels ?? [],
+    analyzeStatus: raw.analyzeStatus ?? "ready",
+  };
+}
+
+function normalizeTask(raw: Task): Task {
+  return {
+    ...raw,
+    labels: raw.labels ?? [],
+  };
+}
+
 export default function App() {
-  const [cards, setCards] = useState<ReviewCard[]>(() => cloneReviews());
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [sheetMode, setSheetMode] = useState<SheetMode>(null);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [toast, setToast] = useState<ToastState | null>(null);
-  const toastTimer = useRef<number | null>(null);
-  const toastId = useRef(0);
+  const [captures, setCaptures] = useState<Capture[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [tab, setTab] = useState<TabId>("captures");
+  const [detail, setDetail] = useState<DetailState>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const readyCards = useMemo(
-    () => cards.filter((c) => c.status === "ready"),
-    [cards],
-  );
-  const waitingCount = useMemo(
-    () => cards.filter((c) => c.status === "waiting").length,
-    [cards],
-  );
-
-  const top = readyCards[0] ?? null;
-  const canRewind = history.length > 0;
-  const sheetOpen = sheetMode != null;
-
-  const clearToastTimer = useCallback(() => {
-    if (toastTimer.current != null) {
-      window.clearTimeout(toastTimer.current);
-      toastTimer.current = null;
-    }
+  useEffect(() => {
+    const state = loadState();
+    setCaptures(state.captures.map(normalizeCapture));
+    setTasks(state.tasks.map(normalizeTask));
+    setMessages(state.messages.length ? state.messages : [assistantWelcome()]);
+    setHydrated(true);
   }, []);
 
-  const showToast = useCallback(
-    (message: string, opts?: { actionLabel?: string; onAction?: () => void }) => {
-      clearToastTimer();
-      toastId.current += 1;
-      const id = toastId.current;
-      setToast({
-        id,
-        message,
-        actionLabel: opts?.actionLabel,
-        onAction: opts?.onAction,
-      });
-      toastTimer.current = window.setTimeout(() => {
-        setToast((t) => (t?.id === id ? null : t));
-      }, 5000);
-    },
-    [clearToastTimer],
+  useEffect(() => {
+    if (!hydrated) return;
+    saveState({ captures, tasks, messages });
+  }, [captures, tasks, messages, hydrated]);
+
+  const openCaptures = useMemo(
+    () => captures.filter((c) => !c.categorized).length,
+    [captures],
   );
+  const openTasks = useMemo(() => tasks.filter((t) => !t.done).length, [tasks]);
 
-  useEffect(() => () => clearToastTimer(), [clearToastTimer]);
+  const detailTask =
+    detail?.kind === "task"
+      ? (tasks.find((t) => t.id === detail.id) ?? null)
+      : null;
+  const detailCapture = (() => {
+    if (detail?.kind === "capture") {
+      return captures.find((c) => c.id === detail.id) ?? null;
+    }
+    if (detailTask?.captureId) {
+      return captures.find((c) => c.id === detailTask.captureId) ?? null;
+    }
+    return null;
+  })();
 
-  function pushHistory(
-    card: ReviewCard,
-    action: HistoryEntry["action"],
-    followUp?: string,
-  ) {
-    historySeq += 1;
-    const entry: HistoryEntry = {
-      id: `hist-${historySeq}`,
-      card: { ...card },
-      action,
+  async function analyzeCapture(capture: Capture) {
+    setCaptures((prev) =>
+      prev.map((c) =>
+        c.id === capture.id ? { ...c, analyzeStatus: "reading" } : c,
+      ),
+    );
+
+    const analysis = await analyzeScreenshot(
+      capture.imageDataUrl,
+      capture.note ?? "Screenshot",
+    );
+
+    setCaptures((prev) =>
+      prev.map((c) =>
+        c.id === capture.id
+          ? {
+              ...c,
+              sourceKind:
+                c.sourceKind === "other" ? analysis.sourceKind : c.sourceKind,
+              note: analysis.title,
+              suggestedTitle: analysis.title,
+              suggestedCategory: analysis.category,
+              labels: analysis.labels,
+              ocrText: analysis.ocrText,
+              analyzeStatus: "ready",
+            }
+          : c,
+      ),
+    );
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: uid("msg"),
+        role: "assistant",
+        text: `${analysis.summary} Say “file it” to add this to your to-do list, or tell me how to categorize it.`,
+        at: Date.now(),
+        previewUrl: capture.imageDataUrl,
+        labels: analysis.labels,
+        captureId: capture.id,
+      },
+    ]);
+  }
+
+  async function handleUpload(files: File[]) {
+    const created: Capture[] = [];
+    const failures: string[] = [];
+
+    for (const file of files) {
+      try {
+        const imageDataUrl = await readFileAsDataUrl(file);
+        created.push({
+          id: uid("cap"),
+          imageDataUrl,
+          sourceKind: detectSourceFromFilename(file.name),
+          createdAt: Date.now(),
+          note: noteFromFilename(file.name),
+          categorized: false,
+          labels: [],
+          analyzeStatus: "pending",
+        });
+      } catch {
+        failures.push(file.name || "image");
+      }
+    }
+
+    if (created.length === 0) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid("msg"),
+          role: "assistant",
+          text: "Couldn’t read that image. Try a PNG or JPEG screenshot from Photos.",
+          at: Date.now(),
+        },
+      ]);
+      setTab("talk");
+      return;
+    }
+
+    setCaptures((prev) => [...created, ...prev]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: uid("msg"),
+        role: "assistant",
+        text:
+          (created.length === 1
+            ? "Got your screenshot — reading it now…"
+            : `Got ${created.length} screenshots — reading them now…`) +
+          (failures.length
+            ? ` (Skipped ${failures.length} that couldn’t be opened.)`
+            : ""),
+        at: Date.now(),
+        previewUrl: created[0]?.imageDataUrl,
+        captureId: created[0]?.id,
+      },
+    ]);
+    setTab("talk");
+
+    for (const capture of created) {
+      await analyzeCapture(capture);
+    }
+  }
+
+  function handleTalk(text: string) {
+    const userMsg: ChatMessage = {
+      id: uid("msg"),
+      role: "user",
+      text,
       at: Date.now(),
-      followUp,
     };
-    setHistory((prev) => [entry, ...prev]);
-    return entry;
-  }
+    const result = categorizeFromTalk(text, captures, tasks);
 
-  function restoreFromEntry(entry: HistoryEntry) {
-    setCards((prev) => {
-      const without = prev.filter((c) => c.id !== entry.card.id);
-      return [{ ...entry.card, status: "ready" }, ...without];
-    });
-    setHistory((prev) => prev.filter((h) => h.id !== entry.id));
-  }
-
-  function rewindLast() {
-    const latest = history[0];
-    if (!latest) return;
-    restoreFromEntry(latest);
-    showToast(`Rewound · ${latest.card.title}`);
-  }
-
-  function mergeCard(card: ReviewCard, comment?: string) {
-    setCards((prev) =>
-      prev.map((c) => (c.id === card.id ? { ...c, status: "merged" } : c)),
-    );
-    setSheetMode(null);
-    const entry = pushHistory(card, "merge", comment);
-    const message = comment
-      ? `Merged · “${comment}” · ${card.title}`
-      : `Merged · ${card.title}`;
-    showToast(message, {
-      actionLabel: "Undo",
-      onAction: () => restoreFromEntry(entry),
-    });
-  }
-
-  function rejectCard(card: ReviewCard, comment?: string) {
-    setCards((prev) =>
-      prev.map((c) => (c.id === card.id ? { ...c, status: "rejected" } : c)),
-    );
-    setSheetMode(null);
-    const entry = pushHistory(card, "reject", comment);
-    const message = comment
-      ? `Rejected · “${comment}” · ${card.title}`
-      : `Rejected · ${card.title}`;
-    showToast(message, {
-      actionLabel: "Undo",
-      onAction: () => restoreFromEntry(entry),
-    });
-  }
-
-  function markWaiting(card: ReviewCard, followUp: string) {
-    setCards((prev) => {
-      const updated = prev.map((c) =>
-        c.id === card.id ? { ...c, status: "waiting" as const } : c,
+    if (result.tasks.length > 0) {
+      setTasks((prev) => [...result.tasks, ...prev]);
+      setCaptures((prev) =>
+        prev.map((c) =>
+          result.captureIds.includes(c.id) ? { ...c, categorized: true } : c,
+        ),
       );
-      const ready = updated.filter((c) => c.status === "ready");
-      const waiting = updated.filter((c) => c.status === "waiting");
-      const done = updated.filter(
-        (c) => c.status === "merged" || c.status === "rejected",
-      );
-      return [...ready, ...waiting, ...done];
-    });
-    setSheetMode(null);
-    const entry = pushHistory(card, "keep", followUp);
-    showToast(`Follow-up sent · “${followUp}” · agent resumed`, {
-      actionLabel: "Undo",
-      onAction: () => restoreFromEntry(entry),
-    });
+    }
+
+    const firstTask = result.tasks[0];
+    const firstCapture = firstTask?.captureId
+      ? captures.find((c) => c.id === firstTask.captureId)
+      : undefined;
+
+    const assistantMsg: ChatMessage = {
+      id: uid("msg"),
+      role: "assistant",
+      text: result.reply,
+      at: Date.now(),
+      taskIds: result.tasks.map((t) => t.id),
+      previewUrl: firstCapture?.imageDataUrl,
+      labels: firstTask?.labels,
+      captureId: firstCapture?.id,
+    };
+
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+
+    if (result.tasks.length > 0) {
+      window.setTimeout(() => setTab("tasks"), 450);
+    }
   }
 
-  function openSheet(mode: SheetMode) {
-    setSheetMode(mode);
+  function handleCreateTask(input: NewTaskInput) {
+    const task: Task = {
+      id: uid("task"),
+      title: input.title,
+      intro: input.intro,
+      category: input.category,
+      sourceKind: input.sourceKind,
+      labels: input.labels,
+      createdAt: Date.now(),
+      done: false,
+    };
+    setTasks((prev) => [task, ...prev]);
+    setCreateOpen(false);
   }
 
-  function handleSwipe(action: SwipeAction, _card: ReviewCard) {
-    if (action === "merge") openSheet({ type: "merge" });
-    else if (action === "reject") openSheet({ type: "reject" });
-    else openSheet({ type: "keep" });
+  function toggleDone(id: string) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+    );
   }
 
   function resetDemo() {
-    clearToastTimer();
-    setToast(null);
-    setSheetMode(null);
-    setHistoryOpen(false);
-    setHistory([]);
-    setCards(cloneReviews());
+    const state = defaultState();
+    setCaptures(state.captures);
+    setTasks(state.tasks);
+    setMessages(state.messages);
+    setDetail(null);
+    setCreateOpen(false);
+    setTab("captures");
+  }
+
+  if (!hydrated) {
+    return <div className="boot" />;
   }
 
   return (
-    <ApprovalShell
-      readyCount={readyCards.length}
-      waitingCount={waitingCount}
-      historyCount={history.length}
-      onOpenHistory={() => setHistoryOpen(true)}
-    >
-      {readyCards.length === 0 ? (
-        <div className="empty-state">
-          <h2>All caught up</h2>
-          <p>No agent diffs waiting</p>
-          {history.length > 0 && (
-            <button
-              type="button"
-              className="btn ghost history-empty-btn"
-              onClick={() => setHistoryOpen(true)}
-            >
-              View history ({history.length})
-            </button>
-          )}
-          <button type="button" className="btn reset" onClick={resetDemo}>
-            Reset demo
-          </button>
-        </div>
-      ) : (
+    <AppShell
+      tab={tab}
+      onTabChange={setTab}
+      openCount={openCaptures}
+      taskCount={openTasks}
+      overlays={
         <>
-          <CardStack
-            cards={readyCards}
-            onSwipe={handleSwipe}
-            locked={sheetOpen || historyOpen}
+          <DetailSheet
+            open={detail != null}
+            task={detailTask}
+            capture={detailCapture}
+            onClose={() => setDetail(null)}
+            onToggleDone={
+              detailTask
+                ? (id) => {
+                    toggleDone(id);
+                  }
+                : undefined
+            }
           />
-          <ActionHints
-            disabled={!top || sheetOpen || historyOpen}
-            canRewind={canRewind}
-            onMerge={() => openSheet({ type: "merge" })}
-            onReject={() => openSheet({ type: "reject" })}
-            onKeepGoing={() => openSheet({ type: "keep" })}
-            onRewind={rewindLast}
+          <CreateTaskSheet
+            open={createOpen}
+            onClose={() => setCreateOpen(false)}
+            onCreate={handleCreateTask}
           />
+        </>
+      }
+    >
+      {tab === "captures" && (
+        <>
+          <CaptureInbox
+            captures={captures}
+            onUpload={handleUpload}
+            onOpenCapture={(id) => setDetail({ kind: "capture", id })}
+            onPickSource={(id, kind) =>
+              setCaptures((prev) =>
+                prev.map((c) =>
+                  c.id === id ? { ...c, sourceKind: kind } : c,
+                ),
+              )
+            }
+          />
+          <button type="button" className="reset-demo" onClick={resetDemo}>
+            Reset demo data
+          </button>
         </>
       )}
 
-      <KeepGoingSheet
-        open={sheetMode?.type === "keep" && !!top}
-        title={top?.title ?? ""}
-        onClose={() => setSheetMode(null)}
-        onSend={(message) => top && markWaiting(top, message)}
-      />
+      {tab === "talk" && (
+        <ChatPanel
+          messages={messages}
+          openCaptures={openCaptures}
+          onSend={handleTalk}
+          onOpenCapture={(id) => setDetail({ kind: "capture", id })}
+        />
+      )}
 
-      <ReviewActionSheet
-        open={
-          (sheetMode?.type === "merge" || sheetMode?.type === "reject") && !!top
-        }
-        action={sheetMode?.type === "reject" ? "reject" : "merge"}
-        title={top?.title ?? ""}
-        onClose={() => setSheetMode(null)}
-        onConfirm={(comment) => {
-          if (!top) return;
-          if (sheetMode?.type === "reject") rejectCard(top, comment);
-          else mergeCard(top, comment);
-        }}
-      />
-
-      <HistorySheet
-        open={historyOpen}
-        entries={history}
-        onClose={() => setHistoryOpen(false)}
-        onRestore={(entry) => {
-          restoreFromEntry(entry);
-          setHistoryOpen(false);
-          showToast(`Restored · ${entry.card.title}`);
-        }}
-      />
-
-      <Toast toast={toast} onDismiss={() => setToast(null)} />
-    </ApprovalShell>
+      {tab === "tasks" && (
+        <TodoList
+          tasks={tasks}
+          captures={captures}
+          onOpen={(id) => setDetail({ kind: "task", id })}
+          onToggleDone={toggleDone}
+          onCreate={() => setCreateOpen(true)}
+        />
+      )}
+    </AppShell>
   );
 }

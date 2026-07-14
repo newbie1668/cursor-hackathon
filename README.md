@@ -1,8 +1,8 @@
-# Approval Mode
+# ShotList
 
-Tinder-style swipe review for Cursor agent diffs — a hackathon prototype for the London iOS Cursor Hackathon **Review + QA** track.
+Talk to your screenshots. Capture YouTube, LinkedIn, or any website — then speak or type how to file it. ShotList turns captures into a dated to-do list you can reopen to revisit the original shot.
 
-**One-liner:** Swipe right to merge, left to reject, up to keep going — Cursor mobile chrome with official cube logo, Tinder-style buttons, and swipe history.
+**One-liner:** Screenshot → talk → categorized, dated tasks with one-tap revisit.
 
 ## Quick start
 
@@ -11,62 +11,58 @@ npm install
 npm run dev
 ```
 
-Open the local URL on a phone or a narrow browser window. On desktop, the UI is framed as a phone.
+Open on a phone or narrow browser window. Desktop shows a phone frame.
 
 ```bash
-npm run build    # production build
-npm run preview  # preview the build
+npm run build
+npm run preview
 ```
 
-## Gestures
+## What you can do
 
-| Gesture / button | Action |
-|------------------|--------|
-| Swipe right / ♥ **Merge** | Approve and merge the agent PR |
-| Swipe left / ✕ **Reject** | Reject / discard |
-| Swipe up / ★ **Keep going** | Open follow-up sheet → agent resumes (waiting) |
-| ↺ **Rewind** | Undo the last swipe |
-| History (clock) | Browse every swipe and restore any card |
+| Action | Result |
+|--------|--------|
+| **Choose from Photos** | Pick existing screenshots (multi-select) |
+| **AI read** | On-device OCR reads the shot, creates labels, shows a preview |
+| **Talk** | Type or dictate (“file it”, “Watch this…”) |
+| **Tasks** | Dated list with labels + screenshot preview |
+| **Tap a task** | Revisit the linked screenshot |
 
-Cards show risk, CI, +/- lines, and expandable unified diffs before you decide. Circular action buttons mirror Tinder’s layout so left / right / up are obvious. Toasts and Rewind support **Undo**; History keeps a full session log.
+Categories: Watch · Follow up · Read · Research · Save · Do
 
-## Demo script (≤2 min Loom)
+## Demo flow
 
-1. **0:00–0:20** — iOS Cursor: launch agent(s) that built/iterated this prototype  
-2. **0:20–0:35** — Pitch: “Approval Mode — Tinder for agent PRs. Review+QA for the phone.”  
-3. **0:35–1:10** — Expand a diff hunk → swipe **right** to merge → swipe **left** to reject  
-4. **1:10–1:40** — Swipe **up** → chip follow-up (e.g. Add tests) → waiting / agent resumed  
-5. **1:40–2:00** — Open **History** → restore a card → Rewind → “All caught up” → Reset demo  
+1. Open **Captures** — seed YouTube, LinkedIn, and website shots are ready  
+2. Open **Talk** — try: `Read the Stripe billing article` (files the open website capture)  
+3. Jump to **Tasks** — open an item to revisit the screenshot  
+4. Add your own screenshot and say how to categorize it  
+5. Use the mic (Chrome / Safari) for hands-free filing  
 
 ## Stack
 
-- Vite + React + TypeScript  
-- Framer Motion (swipe + sheet)  
-- Mock review queue in `src/data/reviews.ts` (no auth / APIs)  
-- Cursor brand: official 2D cube logo from [cursor.com/brand](https://cursor.com/brand), cream canvas `#f2f1ed`, ink `#26251e`, orange `#f54e00`  
-- UI chrome mirrors Cursor for iOS (rounded cards, pill chips, black primary CTAs)
+- Vite + React 19 + TypeScript  
+- Framer Motion  
+- Web Speech API for dictation  
+- LocalStorage persistence (no backend / API keys)
 
 ## Project layout
 
 ```
 src/
   App.tsx
-  data/reviews.ts
-  styles/tokens.css
+  types.ts
+  data/seed.ts
+  lib/categorize.ts   # conversational filing (local)
+  lib/storage.ts
   components/
-    ApprovalShell.tsx
-    CardStack.tsx
-    ReviewCard.tsx
-    DiffHunk.tsx
-    KeepGoingSheet.tsx
-    HistorySheet.tsx
-    ActionHints.tsx
-    ActionIcons.tsx
-    CursorLogo.tsx
-    Toast.tsx
+    AppShell.tsx
+    CaptureInbox.tsx
+    ChatPanel.tsx
+    TodoList.tsx
+    DetailSheet.tsx
+    CreateTaskSheet.tsx
 ```
 
 ## Notes
 
-- This is a **concept prototype** for what Cursor Mobile Approval Mode could feel like — not the official app.  
-- On hackathon night, drive changes via the **iOS Cursor** app so the Loom shows phone-based building.
+Prototype for turning visual clutter (videos, profiles, docs) into an actionable, revisit-able list — built for Cursor mobile hackathon demos.

@@ -1,45 +1,32 @@
 :root {
-  --canvas: #f2f1ed;
-  --surface: #ffffff;
-  --surface-muted: #e8e6e0;
-  --ink: #26251e;
-  --muted: #787165;
-  --hairline: #dad7cf;
-  --border-medium: #bcb8ad;
-  --accent: #f54e00;
-  --action-blue: #3b82f6;
-  --reject: #cf2d56;
-  --keep-going: #c08532;
-  --success: #1f8a65;
-  --ci-fail: #cf2d56;
-  --ci-pending: #c08532;
-  --diff-add-bg: #e8f5ef;
-  --diff-add-text: #1f8a65;
-  --diff-del-bg: #fce8ee;
-  --diff-del-text: #cf2d56;
-  --code-bg: #ebeae4;
-  --overlay-merge: rgba(245, 78, 0, 0.12);
-  --overlay-reject: rgba(207, 45, 86, 0.12);
-  --overlay-keep: rgba(59, 130, 246, 0.12);
-  --risk-safe: #1f8a65;
-  --risk-eyes: #c08532;
-  --risk-danger: #cf2d56;
-  --waiting-bg: #efe9df;
-  --pr-status: #7c3aed;
-  --pr-status-bg: #f3eeff;
-  --stat-add: #1f8a65;
-  --stat-del: #cf2d56;
-  --radius: 16px;
-  --radius-sm: 10px;
-  --radius-pill: 999px;
-  --font-ui: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", "IBM Plex Sans", sans-serif;
-  --font-mono: "SF Mono", ui-monospace, "IBM Plex Mono", monospace;
+  --mist-0: #d9e4ef;
+  --mist-1: #eef3f8;
+  --mist-2: #f6f8fb;
+  --ink: #102033;
+  --ink-soft: #3a5168;
+  --muted: #6b8094;
+  --line: rgba(16, 32, 51, 0.1);
+  --line-strong: rgba(16, 32, 51, 0.16);
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-solid: #ffffff;
+  --surface-strong: #ffffff;
+  --coral: #e85d4c;
+  --coral-soft: #fde8e4;
+  --teal: #1f8a7a;
+  --teal-soft: #e3f4f0;
+  --navy: #16324f;
+  --gold: #c9852d;
+  --gold-soft: #f8eedc;
+  --violet-tag: #4b6cb7;
+  --shadow-phone: 0 30px 80px rgba(16, 32, 51, 0.22);
+  --shadow-float: 0 12px 40px rgba(16, 32, 51, 0.12);
+  --radius: 22px;
+  --radius-sm: 14px;
+  --font-display: "Syne", "Avenir Next", sans-serif;
+  --font-ui: "Figtree", "Avenir Next", sans-serif;
   --phone-width: 390px;
   --phone-height: 844px;
-  --shadow-phone: 0 28px 80px rgba(38, 37, 30, 0.18);
-  --shadow-card: 0 1px 2px rgba(38, 37, 30, 0.04),
-    0 8px 24px rgba(38, 37, 30, 0.06);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 *,
@@ -58,9 +45,12 @@ body,
 
 body {
   font-family: var(--font-ui);
-  font-weight: 400;
   color: var(--ink);
-  background: var(--canvas);
+  background:
+    radial-gradient(1200px 700px at 12% -10%, #b9d0e8 0%, transparent 55%),
+    radial-gradient(900px 600px at 100% 0%, #cfe5de 0%, transparent 50%),
+    radial-gradient(800px 500px at 50% 100%, #f0d5cf 0%, transparent 45%),
+    linear-gradient(160deg, var(--mist-0), var(--mist-1) 45%, var(--mist-2));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
@@ -75,9 +65,22 @@ textarea {
 
 button {
   cursor: pointer;
+  border: none;
+  background: none;
 }
 
-code,
-.mono {
-  font-family: var(--font-mono);
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }

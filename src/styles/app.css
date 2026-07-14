@@ -1,0 +1,16 @@
+.boot {
+  min-height: 100%;
+  background: transparent;
+}
+
+.reset-demo {
+  display: block;
+  width: 100%;
+  margin: 8px 0 16px;
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px dashed var(--line-strong);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
